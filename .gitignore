@@ -39,3 +39,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local claude settings (personal, not for team)
+.claude/settings.local.json
+
+# generated conversation exports
+docs/*.docx
