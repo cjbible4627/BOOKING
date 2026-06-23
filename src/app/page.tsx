@@ -86,7 +86,7 @@ export default function Home() {
 
       {/* 신청자 입력란 */}
       <section className="px-4 pb-8 flex-1">
-        <p className="text-sm font-bold text-gray-800 mb-3">신청자 입력</p>
+        <p className="text-sm font-bold text-gray-800 mb-3">그룹봉사자</p>
 
         <div className="flex gap-2 mb-3">
           <label className="flex-1">
