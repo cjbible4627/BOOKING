@@ -5,8 +5,9 @@ import { logoutAdmin } from '@/lib/admin-storage'
 import AdminBookings from './AdminBookings'
 import RoomManager from './RoomManager'
 import BlockManager from './BlockManager'
+import ExportView from './ExportView'
 
-type Tab = 'bookings' | 'rooms' | 'blocks'
+type Tab = 'bookings' | 'rooms' | 'blocks' | 'export'
 
 export default function AdminDashboard() {
   const router = useRouter()
@@ -45,6 +46,7 @@ export default function AdminDashboard() {
           ['bookings', '예약 현황'],
           ['rooms',    '방 관리'],
           ['blocks',   '차단 관리'],
+          ['export',   '내보내기'],
         ] as const).map(([id, label]) => (
           <button
             key={id}
@@ -64,6 +66,7 @@ export default function AdminDashboard() {
         {tab === 'bookings' && <AdminBookings />}
         {tab === 'rooms'    && <RoomManager />}
         {tab === 'blocks'   && <BlockManager />}
+        {tab === 'export'   && <ExportView />}
       </div>
     </div>
   )
