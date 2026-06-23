@@ -4,22 +4,26 @@ import type { Room } from '@/lib/types'
 import { getRooms, addRoom, toggleRoom } from '@/lib/admin-storage'
 
 export default function RoomManager() {
-  const [rooms, setRooms] = useState<Room[]>([])
+  const [rooms, setRooms]   = useState<Room[]>([])
   const [newName, setNewName] = useState('')
 
-  useEffect(() => { setRooms(getRooms()) }, [])
+  async function refresh() {
+    setRooms(await getRooms())
+  }
 
-  function handleAdd() {
+  useEffect(() => { refresh() }, [])
+
+  async function handleAdd() {
     const name = newName.trim()
     if (!name) return
-    addRoom(name)
-    setRooms(getRooms())
+    await addRoom(name)
+    await refresh()
     setNewName('')
   }
 
-  function handleToggle(id: string) {
-    toggleRoom(id)
-    setRooms(getRooms())
+  async function handleToggle(id: string) {
+    await toggleRoom(id)
+    await refresh()
   }
 
   return (

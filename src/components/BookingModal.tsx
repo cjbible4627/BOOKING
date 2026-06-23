@@ -27,12 +27,13 @@ function endOptions(startTime: string): string[] {
 
 export default function BookingModal({ slot, editTarget, onClose, onSaved }: Props) {
   const isEdit = !!editTarget
-  const [leaderName, setLeaderName] = useState('')
+  const [leaderName, setLeaderName]       = useState('')
   const [baptismalName, setBaptismalName] = useState('')
-  const [groupStage, setGroupStage] = useState<GroupStage>('창세기')
-  const [memberCount, setMemberCount] = useState('')
-  const [endTime, setEndTime] = useState('')
-  const [error, setError] = useState('')
+  const [groupStage, setGroupStage]       = useState<GroupStage>('창세기')
+  const [memberCount, setMemberCount]     = useState('')
+  const [endTime, setEndTime]             = useState('')
+  const [error, setError]                 = useState('')
+  const [loading, setLoading]             = useState(false)
 
   const source = isEdit ? editTarget : slot
 
@@ -45,14 +46,13 @@ export default function BookingModal({ slot, editTarget, onClose, onSaved }: Pro
       setMemberCount(String(editTarget.member_count))
       setEndTime(editTarget.end_time)
     } else {
-      // Restore last used identity
       try {
         const saved = JSON.parse(localStorage.getItem(LAST_USER_KEY) ?? '{}')
         setLeaderName(saved.leaderName ?? '')
         setBaptismalName(saved.baptismalName ?? '')
       } catch {}
       const opts = endOptions(slot!.start_time)
-      setEndTime(opts.length >= 2 ? opts[1] : opts[0]) // default +2h
+      setEndTime(opts.length >= 2 ? opts[1] : opts[0])
     }
     setError('')
   }, [source])
@@ -60,18 +60,20 @@ export default function BookingModal({ slot, editTarget, onClose, onSaved }: Pro
   if (!source) return null
 
   const startTime = isEdit ? editTarget!.start_time : slot!.start_time
-  const date = isEdit ? editTarget!.date : slot!.date
-  const roomId = isEdit ? editTarget!.room_id : slot!.room_id
-  const endOpts = endOptions(startTime)
+  const date      = isEdit ? editTarget!.date       : slot!.date
+  const roomId    = isEdit ? editTarget!.room_id    : slot!.room_id
+  const endOpts   = endOptions(startTime)
 
-  function handleSubmit() {
-    if (!leaderName.trim()) return setError('봉사자 이름을 입력해주세요.')
+  async function handleSubmit() {
+    if (!leaderName.trim())  return setError('봉사자 이름을 입력해주세요.')
     if (!baptismalName.trim()) return setError('세례명을 입력해주세요.')
     const mc = parseInt(memberCount)
     if (!memberCount || isNaN(mc) || mc < 1) return setError('원명수를 입력해주세요.')
 
-    // Save last identity
-    localStorage.setItem(LAST_USER_KEY, JSON.stringify({ leaderName: leaderName.trim(), baptismalName: baptismalName.trim() }))
+    localStorage.setItem(LAST_USER_KEY, JSON.stringify({
+      leaderName: leaderName.trim(),
+      baptismalName: baptismalName.trim(),
+    }))
 
     const data = {
       room_id: roomId,
@@ -84,9 +86,12 @@ export default function BookingModal({ slot, editTarget, onClose, onSaved }: Pro
       member_count: mc,
     }
 
+    setLoading(true)
+    setError('')
     const result = isEdit
-      ? updateBooking(editTarget!.id, data)
-      : createBooking(data)
+      ? await updateBooking(editTarget!.id, data)
+      : await createBooking(data)
+    setLoading(false)
 
     if (!result.ok) return setError(result.error ?? '예약에 실패했습니다.')
     onSaved()
@@ -98,14 +103,12 @@ export default function BookingModal({ slot, editTarget, onClose, onSaved }: Pro
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <div className="w-full max-w-lg bg-white rounded-t-2xl px-5 pt-4 pb-8 shadow-xl">
-        {/* Handle bar */}
         <div className="w-10 h-1 bg-gray-300 rounded-full mx-auto mb-4" />
 
         <h2 className="text-base font-bold text-gray-800 mb-3">
           {isEdit ? '예약 수정' : '공간 예약'}
         </h2>
 
-        {/* Info row */}
         <div className="flex gap-2 mb-4 text-sm text-gray-600 bg-blue-50 rounded-xl px-3 py-2">
           <span className="font-medium text-blue-700">{roomName(roomId)}</span>
           <span>·</span>
@@ -114,7 +117,6 @@ export default function BookingModal({ slot, editTarget, onClose, onSaved }: Pro
           <span>{startTime}</span>
         </div>
 
-        {/* End time */}
         <label className="block mb-3">
           <span className="text-xs text-gray-500 mb-1 block">종료 시간</span>
           <div className="flex gap-2">
@@ -134,7 +136,6 @@ export default function BookingModal({ slot, editTarget, onClose, onSaved }: Pro
           </div>
         </label>
 
-        {/* Name fields */}
         <div className="flex gap-2 mb-3">
           <label className="flex-1">
             <span className="text-xs text-gray-500 mb-1 block">봉사자 이름</span>
@@ -156,7 +157,6 @@ export default function BookingModal({ slot, editTarget, onClose, onSaved }: Pro
           </label>
         </div>
 
-        {/* Stage */}
         <label className="block mb-3">
           <span className="text-xs text-gray-500 mb-1 block">그룹 단계</span>
           <select
@@ -170,7 +170,6 @@ export default function BookingModal({ slot, editTarget, onClose, onSaved }: Pro
           </select>
         </label>
 
-        {/* Member count */}
         <label className="block mb-4">
           <span className="text-xs text-gray-500 mb-1 block">그룹 원명수</span>
           <input
@@ -188,15 +187,17 @@ export default function BookingModal({ slot, editTarget, onClose, onSaved }: Pro
         <div className="flex gap-2">
           <button
             onClick={onClose}
-            className="flex-1 py-3 rounded-xl border border-gray-200 text-sm text-gray-600 font-medium"
+            disabled={loading}
+            className="flex-1 py-3 rounded-xl border border-gray-200 text-sm text-gray-600 font-medium disabled:opacity-50"
           >
             취소
           </button>
           <button
             onClick={handleSubmit}
-            className="flex-2 flex-[2] py-3 rounded-xl bg-blue-600 text-white text-sm font-semibold"
+            disabled={loading}
+            className="flex-2 flex-[2] py-3 rounded-xl bg-blue-600 text-white text-sm font-semibold disabled:opacity-50"
           >
-            {isEdit ? '수정하기' : '예약하기'}
+            {loading ? '저장 중...' : isEdit ? '수정하기' : '예약하기'}
           </button>
         </div>
       </div>

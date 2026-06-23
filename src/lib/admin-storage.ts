@@ -1,72 +1,71 @@
 import type { Room } from './types'
 import { ROOMS } from './constants'
+import { supabase } from './supabase'
 
-const ROOMS_KEY    = 'ybm_rooms'
-const BLOCKED_KEY  = 'ybm_blocked'
-const SESSION_KEY  = 'ybm_admin_session'
+const SESSION_KEY = 'ybm_admin_session'
 
 export interface BlockedPeriod {
   id: string
   date: string
-  start_time?: string  // undefined → 종일 차단
+  start_time?: string
   end_time?: string
   note?: string
 }
 
 // ── 방 관리 ─────────────────────────────────────────
-export function getRooms(): Room[] {
-  if (typeof window === 'undefined') return ROOMS
-  try {
-    const raw = localStorage.getItem(ROOMS_KEY)
-    if (!raw) {
-      localStorage.setItem(ROOMS_KEY, JSON.stringify(ROOMS))
-      return ROOMS
-    }
-    return JSON.parse(raw)
-  } catch {
-    return ROOMS
-  }
+export async function getRooms(): Promise<Room[]> {
+  const { data, error } = await supabase
+    .from('rooms')
+    .select('*')
+    .order('created_at')
+  if (error) return ROOMS
+  return data ?? ROOMS
 }
 
-export function saveRooms(rooms: Room[]): void {
-  localStorage.setItem(ROOMS_KEY, JSON.stringify(rooms))
+export async function addRoom(name: string): Promise<Room> {
+  const id = `room-${Date.now()}`
+  const { data, error } = await supabase
+    .from('rooms')
+    .insert({ id, name: name.trim(), is_active: true })
+    .select()
+    .single()
+  if (error) throw error
+  return data
 }
 
-export function addRoom(name: string): Room {
-  const rooms = getRooms()
-  const room: Room = { id: `room-${Date.now()}`, name: name.trim(), is_active: true }
-  saveRooms([...rooms, room])
-  return room
-}
-
-export function toggleRoom(id: string): void {
-  saveRooms(getRooms().map(r => r.id === id ? { ...r, is_active: !r.is_active } : r))
+export async function toggleRoom(id: string): Promise<void> {
+  const { data } = await supabase.from('rooms').select('is_active').eq('id', id).single()
+  if (!data) return
+  await supabase.from('rooms').update({ is_active: !data.is_active }).eq('id', id)
 }
 
 // ── 차단 관리 ────────────────────────────────────────
-export function getBlocked(): BlockedPeriod[] {
-  if (typeof window === 'undefined') return []
-  try {
-    return JSON.parse(localStorage.getItem(BLOCKED_KEY) ?? '[]')
-  } catch {
-    return []
-  }
+export async function getBlocked(): Promise<BlockedPeriod[]> {
+  const { data, error } = await supabase.from('blocked_periods').select('*').order('date')
+  if (error) return []
+  return (data ?? []).map(b => ({
+    id: b.id,
+    date: b.date,
+    start_time: b.start_time ?? undefined,
+    end_time: b.end_time ?? undefined,
+    note: b.note ?? undefined,
+  }))
 }
 
-export function addBlock(data: Omit<BlockedPeriod, 'id'>): void {
-  const all = getBlocked()
-  localStorage.setItem(BLOCKED_KEY, JSON.stringify([...all, { id: `blk-${Date.now()}`, ...data }]))
+export async function addBlock(data: Omit<BlockedPeriod, 'id'>): Promise<void> {
+  const id = `blk-${Date.now()}`
+  await supabase.from('blocked_periods').insert({ id, ...data })
 }
 
-export function removeBlock(id: string): void {
-  localStorage.setItem(BLOCKED_KEY, JSON.stringify(getBlocked().filter(b => b.id !== id)))
+export async function removeBlock(id: string): Promise<void> {
+  await supabase.from('blocked_periods').delete().eq('id', id)
 }
 
-export function isSlotBlocked(date: string, time: string): boolean {
+export function checkSlotBlocked(blocks: BlockedPeriod[], date: string, time: string): boolean {
   const h = parseInt(time)
-  return getBlocked().some(b => {
+  return blocks.some(b => {
     if (b.date !== date) return false
-    if (!b.start_time) return true                          // 종일 차단
+    if (!b.start_time) return true
     return h >= parseInt(b.start_time) && h < parseInt(b.end_time ?? '24')
   })
 }

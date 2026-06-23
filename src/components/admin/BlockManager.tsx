@@ -5,28 +5,35 @@ import { getBlocked, addBlock, removeBlock } from '@/lib/admin-storage'
 import { TIME_SLOTS, OP_END } from '@/lib/constants'
 
 export default function BlockManager() {
-  const [blocks, setBlocked] = useState<BlockedPeriod[]>([])
-  const [date, setDate] = useState('')
-  const [allDay, setAllDay] = useState(true)
-  const [startTime, setStartTime] = useState('09:00')
-  const [endTime, setEndTime] = useState('18:00')
-  const [note, setNote] = useState('')
+  const [blocks, setBlocked]   = useState<BlockedPeriod[]>([])
+  const [date, setDate]        = useState('')
+  const [allDay, setAllDay]    = useState(true)
+  const [startTime, setStart]  = useState('09:00')
+  const [endTime, setEnd]      = useState('18:00')
+  const [note, setNote]        = useState('')
 
-  useEffect(() => { setBlocked(getBlocked()) }, [])
+  async function refresh() {
+    setBlocked(await getBlocked())
+  }
 
-  function refresh() { setBlocked(getBlocked()) }
+  useEffect(() => { refresh() }, [])
 
-  function handleAdd() {
+  async function handleAdd() {
     if (!date) return
-    addBlock({
+    await addBlock({
       date,
       start_time: allDay ? undefined : startTime,
       end_time:   allDay ? undefined : endTime,
       note: note.trim() || undefined,
     })
-    refresh()
+    await refresh()
     setDate('')
     setNote('')
+  }
+
+  async function handleRemove(id: string) {
+    await removeBlock(id)
+    await refresh()
   }
 
   const endOptions = [...TIME_SLOTS.slice(1), `${String(OP_END).padStart(2,'0')}:00`]
@@ -37,7 +44,6 @@ export default function BlockManager() {
         차단된 날짜·시간에는 예약을 할 수 없습니다.
       </p>
 
-      {/* 추가 폼 */}
       <div className="bg-gray-50 rounded-2xl p-4 mb-4 space-y-3">
         <div>
           <label className="text-xs text-gray-500 mb-1 block">날짜</label>
@@ -69,7 +75,7 @@ export default function BlockManager() {
           <div className="flex items-center gap-2">
             <select
               value={startTime}
-              onChange={e => setStartTime(e.target.value)}
+              onChange={e => setStart(e.target.value)}
               className="flex-1 border border-gray-200 rounded-xl px-2 py-2 text-sm bg-white"
             >
               {TIME_SLOTS.map(t => <option key={t} value={t}>{t}</option>)}
@@ -77,7 +83,7 @@ export default function BlockManager() {
             <span className="text-gray-400 text-xs">~</span>
             <select
               value={endTime}
-              onChange={e => setEndTime(e.target.value)}
+              onChange={e => setEnd(e.target.value)}
               className="flex-1 border border-gray-200 rounded-xl px-2 py-2 text-sm bg-white"
             >
               {endOptions.map(t => <option key={t} value={t}>{t}</option>)}
@@ -100,7 +106,6 @@ export default function BlockManager() {
         </button>
       </div>
 
-      {/* 차단 목록 */}
       {blocks.length === 0 ? (
         <p className="text-center text-gray-400 text-sm py-6">차단된 날짜가 없습니다.</p>
       ) : (
@@ -118,7 +123,7 @@ export default function BlockManager() {
                 {b.note && <p className="text-xs text-gray-400 mt-0.5">{b.note}</p>}
               </div>
               <button
-                onClick={() => { removeBlock(b.id); refresh() }}
+                onClick={() => handleRemove(b.id)}
                 className="text-xs text-red-500 px-2.5 py-1 border border-red-200 rounded-xl ml-3"
               >
                 삭제

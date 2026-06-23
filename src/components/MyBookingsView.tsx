@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import type { Booking } from '@/lib/types'
 import { ROOMS } from '@/lib/constants'
 import { myBookings, cancelBooking } from '@/lib/storage'
@@ -18,31 +18,32 @@ function formatDate(date: string) {
 }
 
 export default function MyBookingsView({ onEdit }: Props) {
-  const [name, setName] = useState('')
-  const [baptismal, setBaptismal] = useState('')
-  const [bookings, setBookings] = useState<Booking[] | null>(null)
-  const [confirmId, setConfirmId] = useState<string | null>(null)
+  const [name, setBaptismal]       = useState('')
+  const [baptismal, setBaptismalN] = useState('')
+  const [bookings, setBookings]    = useState<Booking[] | null>(null)
+  const [confirmId, setConfirmId]  = useState<string | null>(null)
+  const [loading, setLoading]      = useState(false)
 
-  function search() {
+  async function search() {
     if (!name.trim() || !baptismal.trim()) return
-    const result = myBookings(name.trim(), baptismal.trim())
-    result.sort((a, b) => (a.date + a.start_time).localeCompare(b.date + b.start_time))
+    setLoading(true)
+    const result = await myBookings(name.trim(), baptismal.trim())
     setBookings(result)
+    setLoading(false)
   }
 
-  function handleCancel(id: string) {
-    cancelBooking(id)
+  async function handleCancel(id: string) {
+    await cancelBooking(id)
     setBookings((prev) => prev?.filter((b) => b.id !== id) ?? null)
     setConfirmId(null)
   }
 
-  const today = new Date().toLocaleDateString('sv-SE')
+  const today    = new Date().toLocaleDateString('sv-SE')
   const upcoming = bookings?.filter((b) => b.date >= today) ?? []
-  const past = bookings?.filter((b) => b.date < today) ?? []
+  const past     = bookings?.filter((b) => b.date < today)  ?? []
 
   return (
     <div className="flex flex-col h-full">
-      {/* Lookup form */}
       <div className="bg-white border-b border-gray-100 px-4 py-3">
         <p className="text-xs text-gray-500 mb-2">이름과 세례명으로 내 예약을 조회합니다.</p>
         <div className="flex gap-2 mb-2">
@@ -50,26 +51,26 @@ export default function MyBookingsView({ onEdit }: Props) {
             className="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-400"
             placeholder="봉사자 이름"
             value={name}
-            onChange={(e) => setName(e.target.value)}
+            onChange={(e) => setBaptismal(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && search()}
           />
           <input
             className="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-400"
             placeholder="세례명"
             value={baptismal}
-            onChange={(e) => setBaptismal(e.target.value)}
+            onChange={(e) => setBaptismalN(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && search()}
           />
         </div>
         <button
           onClick={search}
-          className="w-full py-2.5 bg-blue-600 text-white rounded-xl text-sm font-semibold"
+          disabled={loading}
+          className="w-full py-2.5 bg-blue-600 text-white rounded-xl text-sm font-semibold disabled:opacity-50"
         >
-          조회
+          {loading ? '조회 중...' : '조회'}
         </button>
       </div>
 
-      {/* Results */}
       <div className="flex-1 overflow-y-auto px-4 py-3">
         {bookings === null ? (
           <p className="text-center text-gray-400 text-sm mt-8">이름과 세례명을 입력해 조회하세요.</p>

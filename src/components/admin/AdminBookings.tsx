@@ -4,30 +4,31 @@ import type { Booking, Room } from '@/lib/types'
 import { loadBookings, cancelBooking } from '@/lib/storage'
 import { getRooms } from '@/lib/admin-storage'
 
-const DAYS = ['일', '월', '화', '수', '목', '금', '토']
-
 export default function AdminBookings() {
   const today = new Date().toLocaleDateString('sv-SE')
-  const [date, setDate] = useState(today)
+  const [date, setDate]         = useState(today)
   const [bookings, setBookings] = useState<Booking[]>([])
-  const [rooms, setRooms] = useState<Room[]>([])
+  const [rooms, setRooms]       = useState<Room[]>([])
   const [confirmId, setConfirmId] = useState<string | null>(null)
 
-  useEffect(() => { setRooms(getRooms()) }, [])
+  useEffect(() => { getRooms().then(setRooms) }, [])
 
   useEffect(() => {
-    const list = loadBookings()
-      .filter(b => b.date === date)
-      .sort((a, b) => `${a.room_id}${a.start_time}`.localeCompare(`${b.room_id}${b.start_time}`))
-    setBookings(list)
+    loadBookings().then(all => {
+      setBookings(
+        all
+          .filter(b => b.date === date)
+          .sort((a, b) => `${a.room_id}${a.start_time}`.localeCompare(`${b.room_id}${b.start_time}`))
+      )
+    })
   }, [date])
 
   function roomName(id: string) {
     return rooms.find(r => r.id === id)?.name ?? id
   }
 
-  function handleCancel(id: string) {
-    cancelBooking(id)
+  async function handleCancel(id: string) {
+    await cancelBooking(id)
     setBookings(prev => prev.filter(b => b.id !== id))
     setConfirmId(null)
   }
