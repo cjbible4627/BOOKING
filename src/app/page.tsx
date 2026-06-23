@@ -101,7 +101,7 @@ export default function Home() {
             <span className="text-sm font-semibold text-gray-700 mb-1.5 block">이름</span>
             <input
               className="w-full border-2 border-gray-800 rounded-xl px-4 py-3 text-base font-medium focus:outline-none focus:border-blue-600"
-              placeholder="홍길동"
+              placeholder="최양업"
               value={name}
               onChange={(e) => setName(e.target.value)}
             />
@@ -110,7 +110,7 @@ export default function Home() {
             <span className="text-sm font-semibold text-gray-700 mb-1.5 block">세례명</span>
             <input
               className="w-full border-2 border-gray-800 rounded-xl px-4 py-3 text-base font-medium focus:outline-none focus:border-blue-600"
-              placeholder="요한"
+              placeholder="토마스"
               value={baptismal}
               onChange={(e) => setBaptismal(e.target.value)}
             />
