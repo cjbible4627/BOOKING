@@ -29,6 +29,17 @@ export async function loadBookings(): Promise<Booking[]> {
   return data ?? []
 }
 
+export async function upcomingBookings(from: string): Promise<Booking[]> {
+  const { data, error } = await supabase
+    .from('bookings')
+    .select('*')
+    .gte('date', from)
+    .order('date')
+    .order('start_time')
+  if (error) throw error
+  return data ?? []
+}
+
 export async function createBooking(data: NewBooking): Promise<{ ok: boolean; error?: string; booking?: Booking }> {
   const { data: inserted, error } = await supabase
     .from('bookings')
