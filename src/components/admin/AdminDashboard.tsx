@@ -6,8 +6,9 @@ import AdminBookings from './AdminBookings'
 import RoomManager from './RoomManager'
 import BlockManager from './BlockManager'
 import ExportView from './ExportView'
+import NoticeManager from './NoticeManager'
 
-type Tab = 'bookings' | 'rooms' | 'blocks' | 'export'
+type Tab = 'bookings' | 'rooms' | 'blocks' | 'export' | 'notices'
 
 export default function AdminDashboard() {
   const router = useRouter()
@@ -46,6 +47,7 @@ export default function AdminDashboard() {
           ['bookings', '예약 현황'],
           ['rooms',    '방 관리'],
           ['blocks',   '차단 관리'],
+          ['notices',  '공지사항'],
           ['export',   '내보내기'],
         ] as const).map(([id, label]) => (
           <button
@@ -66,6 +68,7 @@ export default function AdminDashboard() {
         {tab === 'bookings' && <AdminBookings />}
         {tab === 'rooms'    && <RoomManager />}
         {tab === 'blocks'   && <BlockManager />}
+        {tab === 'notices'  && <NoticeManager />}
         {tab === 'export'   && <ExportView />}
       </div>
     </div>

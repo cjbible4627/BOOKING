@@ -69,7 +69,7 @@ export default function Home() {
             등록된 공지사항이 없습니다.
           </div>
         ) : (
-          <div className="space-y-2">
+          <div className="space-y-2 max-h-44 overflow-y-auto pr-0.5">
             {notices.map((n) => (
               <div key={n.id} className="bg-blue-50 rounded-2xl px-4 py-3">
                 <p className="text-sm text-gray-700 whitespace-pre-wrap">{n.content}</p>

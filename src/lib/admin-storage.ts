@@ -85,6 +85,10 @@ export async function addNotice(content: string): Promise<void> {
   await supabase.from('notices').insert({ content })
 }
 
+export async function updateNotice(id: string, content: string): Promise<void> {
+  await supabase.from('notices').update({ content }).eq('id', id)
+}
+
 export async function removeNotice(id: string): Promise<void> {
   await supabase.from('notices').update({ is_active: false }).eq('id', id)
 }
