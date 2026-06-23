@@ -51,7 +51,7 @@
 ```
 NEXT_PUBLIC_SUPABASE_URL        = https://cvlcjznajqeteyalvkgk.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY   = eyJ...  (Supabase anon key)
-NEXT_PUBLIC_ADMIN_PASSWORD      = gkscjdma4627!!
+NEXT_PUBLIC_ADMIN_PASSWORD      = (인수인계서.docx 참조)
 ```
 
 > `.env.local`은 git에 커밋하지 않음. `.mcp.json`도 동일.
@@ -259,7 +259,7 @@ npm run build
 ```env
 NEXT_PUBLIC_SUPABASE_URL=https://cvlcjznajqeteyalvkgk.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=<Supabase anon key>
-NEXT_PUBLIC_ADMIN_PASSWORD=gkscjdma4627!!
+NEXT_PUBLIC_ADMIN_PASSWORD=(인수인계서.docx 참조)
 ```
 
 ---

@@ -76,6 +76,7 @@ export default function AllBookingsView() {
     if (month === 0) { setYear(y => y - 1); setMonth(11) }
     else setMonth(m => m - 1)
   }
+
   function nextMonth() {
     setSelected(null)
     if (month === 11) { setYear(y => y + 1); setMonth(0) }
@@ -99,27 +100,24 @@ export default function AllBookingsView() {
   return (
     <div className="flex-1 overflow-y-auto pb-4 bg-white">
 
-      {/* Month navigation */}
       <div className="flex items-center justify-between px-4 py-3">
         <button
           onClick={prevMonth}
           className="w-8 h-8 flex items-center justify-center text-black text-xl font-bold"
         >
-          ‹
+          &#8249;
         </button>
         <span className="font-extrabold text-black text-base">{year}년 {month + 1}월</span>
         <button
           onClick={nextMonth}
           className="w-8 h-8 flex items-center justify-center text-black text-xl font-bold"
         >
-          ›
+          &#8250;
         </button>
       </div>
 
-      {/* Calendar card — sky background wraps DOW header + grid only */}
       <div className="mx-4 mb-4 bg-sky-100 rounded-2xl overflow-hidden">
 
-        {/* Day-of-week header */}
         <div className="grid grid-cols-7 pt-3 px-2">
           {DOW.map((d, i) => (
             <div
@@ -133,7 +131,6 @@ export default function AllBookingsView() {
           ))}
         </div>
 
-        {/* Calendar grid */}
         {loading ? (
           <p className="text-center text-black font-semibold text-sm py-10">불러오는 중...</p>
         ) : (
@@ -167,7 +164,6 @@ export default function AllBookingsView() {
                   >
                     {cell.day}
                   </div>
-
                   {dayBks.length > 0 && (
                     <div className="flex flex-col gap-px w-[70%] mt-1">
                       {dayBks.slice(0, 3).map((b, j) => (
@@ -191,7 +187,6 @@ export default function AllBookingsView() {
         )}
       </div>
 
-      {/* Bottom sheet popup */}
       {selected && (
         <div
           className="fixed inset-0 z-50 flex items-end"
@@ -204,24 +199,18 @@ export default function AllBookingsView() {
             onClick={e => e.stopPropagation()}
           >
             <div className="w-10 h-1 bg-black rounded-full mx-auto mb-4 opacity-20" />
-
             <div className="flex items-start justify-between px-5 mb-3">
               <div>
-                <p className="font-extrabold text-black text-[15px]">
-                  {fmtDate(selected)}
-                </p>
-                <p className="text-[12px] text-black font-semibold mt-0.5">
-                  예약 {selectedList.length}건
-                </p>
+                <p className="font-extrabold text-black text-[15px]">{fmtDate(selected)}</p>
+                <p className="text-[12px] text-black font-semibold mt-0.5">예약 {selectedList.length}건</p>
               </div>
               <button
                 onClick={() => setSelected(null)}
                 className="text-black text-xl mt-0.5 leading-none font-bold"
               >
-                ✕
+                &#x2715;
               </button>
             </div>
-
             <div className="overflow-y-auto px-5">
               {selectedList.length === 0 ? (
                 <p className="text-center text-black font-semibold text-sm py-8">
@@ -243,12 +232,10 @@ export default function AllBookingsView() {
                       <div className="flex-1 min-w-0">
                         <p className="text-[13px] font-bold text-black truncate">
                           {b.leader_name}
-                          <span className="font-semibold text-black ml-1">
-                            ({b.baptismal_name})
-                          </span>
+                          <span className="font-semibold text-black ml-1">({b.baptismal_name})</span>
                         </p>
                         <p className="text-[11px] text-black font-semibold mt-0.5">
-                          {b.start_time}–{b.end_time} · {b.member_count}명
+                          {b.start_time}&#x2013;{b.end_time} · {b.member_count}명
                         </p>
                       </div>
                       <span className="text-[11px] font-bold text-black border border-black px-2 py-1 rounded-lg whitespace-nowrap flex-shrink-0">
