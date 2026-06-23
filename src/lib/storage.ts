@@ -55,7 +55,7 @@ export async function upcomingBookings(from: string): Promise<Booking[]> {
 export async function createBooking(data: NewBooking): Promise<{ ok: boolean; error?: string; booking?: Booking }> {
   const { data: inserted, error } = await supabase
     .from('bookings')
-    .insert(data)
+    .insert({ id: crypto.randomUUID(), ...data })
     .select()
     .single()
   if (error) {
