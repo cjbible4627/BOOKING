@@ -16,6 +16,7 @@ export interface Booking {
   baptismal_name: string
   group_stage: GroupStage
   member_count: number
+  pin: string
   created_at: string
 }
 
@@ -28,6 +29,21 @@ export interface NewBooking {
   baptismal_name: string
   group_stage: GroupStage
   member_count: number
+  pin: string
+}
+
+export interface UserIdentity {
+  name: string
+  baptismal: string
+  groupStage: GroupStage
+  pin: string
+}
+
+export interface Notice {
+  id: string
+  content: string
+  is_active: boolean
+  created_at: string
 }
 
 export interface SelectedSlot {

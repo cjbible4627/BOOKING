@@ -1,99 +1,142 @@
 'use client'
-import { useState, useEffect, useCallback } from 'react'
-import type { Booking, Room, SelectedSlot } from '@/lib/types'
-import type { BlockedPeriod } from '@/lib/admin-storage'
-import { bookingsForDate } from '@/lib/storage'
-import { getRooms, getBlocked } from '@/lib/admin-storage'
-import DateTabs from '@/components/DateTabs'
-import BookingGrid from '@/components/BookingGrid'
-import BookingModal from '@/components/BookingModal'
-import MyBookingsView from '@/components/MyBookingsView'
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import type { GroupStage, Notice, UserIdentity } from '@/lib/types'
+import { GROUP_STAGES } from '@/lib/constants'
+import { getNotices } from '@/lib/admin-storage'
 
-type Tab = 'grid' | 'mine'
+const IDENTITY_KEY = 'ybm_identity'
 
 export default function Home() {
-  const today = new Date().toLocaleDateString('sv-SE')
-  const [tab, setTab]                   = useState<Tab>('grid')
-  const [date, setDate]                 = useState(today)
-  const [bookings, setBookings]         = useState<Booking[]>([])
-  const [rooms, setRooms]               = useState<Room[]>([])
-  const [blockedPeriods, setBlocked]    = useState<BlockedPeriod[]>([])
-  const [slot, setSlot]                 = useState<SelectedSlot | null>(null)
-  const [editTarget, setEditTarget]     = useState<Booking | null>(null)
+  const router = useRouter()
+  const [notices, setNotices]         = useState<Notice[]>([])
+  const [name, setName]               = useState('')
+  const [baptismal, setBaptismal]     = useState('')
+  const [groupStage, setGroupStage]   = useState<GroupStage>('창세기')
+  const [pin, setPin]                 = useState('')
+  const [error, setError]             = useState('')
 
   useEffect(() => {
-    getRooms().then(setRooms)
-    getBlocked().then(setBlocked)
+    getNotices().then(setNotices)
+    try {
+      const saved: UserIdentity = JSON.parse(localStorage.getItem(IDENTITY_KEY) ?? '{}')
+      if (saved.name)       setName(saved.name)
+      if (saved.baptismal)  setBaptismal(saved.baptismal)
+      if (saved.groupStage) setGroupStage(saved.groupStage)
+      if (saved.pin)        setPin(saved.pin)
+    } catch {}
   }, [])
 
-  const refresh = useCallback(() => {
-    bookingsForDate(date).then(setBookings)
-  }, [date])
+  function handleEnter() {
+    if (!name.trim())     return setError('이름을 입력해주세요.')
+    if (!baptismal.trim()) return setError('세례명을 입력해주세요.')
+    if (!/^\d{4}$/.test(pin)) return setError('개인 비밀번호는 숫자 4자리입니다.')
 
-  useEffect(() => { refresh() }, [refresh])
-
-  function openEdit(booking: Booking) {
-    setEditTarget(booking)
-    setSlot(null)
-    setTab('grid')
-  }
-
-  function closeModal() {
-    setSlot(null)
-    setEditTarget(null)
-  }
-
-  function onSaved() {
-    closeModal()
-    refresh()
+    const identity: UserIdentity = {
+      name: name.trim(),
+      baptismal: baptismal.trim(),
+      groupStage,
+      pin,
+    }
+    localStorage.setItem(IDENTITY_KEY, JSON.stringify(identity))
+    router.push('/booking')
   }
 
   return (
-    <div className="flex flex-col h-svh bg-white">
+    <div className="flex flex-col min-h-svh bg-white">
+      {/* Header */}
       <header className="flex items-center justify-between px-4 py-3 bg-white border-b border-gray-100">
         <h1 className="text-base font-bold text-gray-900">청년성서모임 공간 예약</h1>
         <a href="/admin" className="text-[11px] text-gray-300 hover:text-gray-500">관리자</a>
       </header>
 
-      <div className="flex bg-white border-b border-gray-100 px-4 gap-1">
-        {([['grid', '공간 예약'], ['mine', '내 예약']] as const).map(([id, label]) => (
-          <button
-            key={id}
-            onClick={() => setTab(id)}
-            className={`py-2.5 px-4 text-sm font-medium border-b-2 transition-colors ${
-              tab === id
-                ? 'border-blue-600 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
-            }`}
+      {/* 공지사항 */}
+      <section className="px-4 pt-4 pb-2">
+        <div className="flex items-center gap-1.5 mb-2">
+          <span className="text-sm font-bold text-gray-800">📢 공지사항</span>
+        </div>
+
+        {notices.length === 0 ? (
+          <div className="bg-gray-50 rounded-2xl px-4 py-5 text-center text-gray-400 text-sm">
+            등록된 공지사항이 없습니다.
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {notices.map((n) => (
+              <div key={n.id} className="bg-blue-50 rounded-2xl px-4 py-3">
+                <p className="text-sm text-gray-700 whitespace-pre-wrap">{n.content}</p>
+                <p className="text-[11px] text-gray-400 mt-1">
+                  {new Date(n.created_at).toLocaleDateString('ko-KR')}
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
+      <div className="mx-4 my-3 border-t border-gray-100" />
+
+      {/* 신청자 입력란 */}
+      <section className="px-4 pb-8 flex-1">
+        <p className="text-sm font-bold text-gray-800 mb-3">신청자 입력</p>
+
+        <div className="flex gap-2 mb-3">
+          <label className="flex-1">
+            <span className="text-xs text-gray-500 mb-1 block">이름</span>
+            <input
+              className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-blue-400"
+              placeholder="홍길동"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
+          </label>
+          <label className="flex-1">
+            <span className="text-xs text-gray-500 mb-1 block">세례명</span>
+            <input
+              className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-blue-400"
+              placeholder="요한"
+              value={baptismal}
+              onChange={(e) => setBaptismal(e.target.value)}
+            />
+          </label>
+        </div>
+
+        <label className="block mb-3">
+          <span className="text-xs text-gray-500 mb-1 block">그룹과정</span>
+          <select
+            className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:border-blue-400"
+            value={groupStage}
+            onChange={(e) => setGroupStage(e.target.value as GroupStage)}
           >
-            {label}
-          </button>
-        ))}
-      </div>
+            {GROUP_STAGES.map((s) => (
+              <option key={s} value={s}>{s}</option>
+            ))}
+          </select>
+        </label>
 
-      {tab === 'grid' ? (
-        <>
-          <DateTabs selected={date} onSelect={d => setDate(d)} />
-          <BookingGrid
-            date={date}
-            bookings={bookings}
-            rooms={rooms}
-            blockedPeriods={blockedPeriods}
-            onSlotClick={s => { setSlot(s); setEditTarget(null) }}
+        <label className="block mb-4">
+          <span className="text-xs text-gray-500 mb-1 block">개인 비밀번호 (숫자 4자리)</span>
+          <input
+            type="password"
+            inputMode="numeric"
+            maxLength={4}
+            className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-blue-400 tracking-widest"
+            placeholder="●●●●"
+            value={pin}
+            onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
           />
-        </>
-      ) : (
-        <MyBookingsView onEdit={openEdit} />
-      )}
+          <p className="text-[11px] text-gray-400 mt-1">예약 취소·수정 시 사용됩니다.</p>
+        </label>
 
-      {(slot !== null || editTarget !== null) && (
-        <BookingModal
-          slot={slot}
-          editTarget={editTarget}
-          onClose={closeModal}
-          onSaved={onSaved}
-        />
-      )}
+        {error && <p className="text-red-500 text-xs mb-3">{error}</p>}
+
+        <button
+          onClick={handleEnter}
+          className="w-full py-3.5 bg-blue-600 text-white rounded-2xl text-sm font-bold"
+        >
+          예약하러 가기
+        </button>
+      </section>
     </div>
   )
 }

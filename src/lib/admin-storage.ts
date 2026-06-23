@@ -1,4 +1,4 @@
-import type { Room } from './types'
+import type { Room, Notice } from './types'
 import { ROOMS } from './constants'
 import { supabase } from './supabase'
 
@@ -68,6 +68,25 @@ export function checkSlotBlocked(blocks: BlockedPeriod[], date: string, time: st
     if (!b.start_time) return true
     return h >= parseInt(b.start_time) && h < parseInt(b.end_time ?? '24')
   })
+}
+
+// ── 공지사항 관리 ────────────────────────────────────
+export async function getNotices(): Promise<Notice[]> {
+  const { data, error } = await supabase
+    .from('notices')
+    .select('*')
+    .eq('is_active', true)
+    .order('created_at', { ascending: false })
+  if (error) return []
+  return data ?? []
+}
+
+export async function addNotice(content: string): Promise<void> {
+  await supabase.from('notices').insert({ content })
+}
+
+export async function removeNotice(id: string): Promise<void> {
+  await supabase.from('notices').update({ is_active: false }).eq('id', id)
 }
 
 // ── 관리자 인증 ──────────────────────────────────────

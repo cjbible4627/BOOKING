@@ -1,10 +1,11 @@
 'use client'
-import { useState } from 'react'
-import type { Booking } from '@/lib/types'
+import { useState, useEffect } from 'react'
+import type { Booking, UserIdentity } from '@/lib/types'
 import { ROOMS } from '@/lib/constants'
 import { myBookings, cancelBooking } from '@/lib/storage'
 
 interface Props {
+  identity: UserIdentity
   onEdit: (booking: Booking) => void
 }
 
@@ -17,25 +18,38 @@ function formatDate(date: string) {
   return `${d.getMonth() + 1}월 ${d.getDate()}일 (${['일','월','화','수','목','금','토'][d.getDay()]})`
 }
 
-export default function MyBookingsView({ onEdit }: Props) {
-  const [name, setBaptismal]       = useState('')
-  const [baptismal, setBaptismalN] = useState('')
-  const [bookings, setBookings]    = useState<Booking[] | null>(null)
-  const [confirmId, setConfirmId]  = useState<string | null>(null)
-  const [loading, setLoading]      = useState(false)
+export default function MyBookingsView({ identity, onEdit }: Props) {
+  const [bookings, setBookings]   = useState<Booking[] | null>(null)
+  const [confirmId, setConfirmId] = useState<string | null>(null)
+  const [pinInput, setPinInput]   = useState('')
+  const [pinError, setPinError]   = useState('')
+  const [loading, setLoading]     = useState(false)
 
-  async function search() {
-    if (!name.trim() || !baptismal.trim()) return
+  async function load() {
     setLoading(true)
-    const result = await myBookings(name.trim(), baptismal.trim())
+    const result = await myBookings(identity.name, identity.baptismal)
     setBookings(result)
     setLoading(false)
   }
 
-  async function handleCancel(id: string) {
-    await cancelBooking(id)
-    setBookings((prev) => prev?.filter((b) => b.id !== id) ?? null)
+  useEffect(() => { load() }, [])
+
+  async function handleCancel(booking: Booking) {
+    if (pinInput !== booking.pin) {
+      setPinError('비밀번호가 맞지 않습니다.')
+      return
+    }
+    await cancelBooking(booking.id)
+    setBookings((prev) => prev?.filter((b) => b.id !== booking.id) ?? null)
     setConfirmId(null)
+    setPinInput('')
+    setPinError('')
+  }
+
+  function openConfirm(id: string) {
+    setConfirmId(id)
+    setPinInput('')
+    setPinError('')
   }
 
   const today    = new Date().toLocaleDateString('sv-SE')
@@ -44,37 +58,10 @@ export default function MyBookingsView({ onEdit }: Props) {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="bg-white border-b border-gray-100 px-4 py-3">
-        <p className="text-xs text-gray-500 mb-2">이름과 세례명으로 내 예약을 조회합니다.</p>
-        <div className="flex gap-2 mb-2">
-          <input
-            className="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-400"
-            placeholder="봉사자 이름"
-            value={name}
-            onChange={(e) => setBaptismal(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && search()}
-          />
-          <input
-            className="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-400"
-            placeholder="세례명"
-            value={baptismal}
-            onChange={(e) => setBaptismalN(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && search()}
-          />
-        </div>
-        <button
-          onClick={search}
-          disabled={loading}
-          className="w-full py-2.5 bg-blue-600 text-white rounded-xl text-sm font-semibold disabled:opacity-50"
-        >
-          {loading ? '조회 중...' : '조회'}
-        </button>
-      </div>
-
       <div className="flex-1 overflow-y-auto px-4 py-3">
-        {bookings === null ? (
-          <p className="text-center text-gray-400 text-sm mt-8">이름과 세례명을 입력해 조회하세요.</p>
-        ) : bookings.length === 0 ? (
+        {loading ? (
+          <p className="text-center text-gray-400 text-sm mt-8">불러오는 중...</p>
+        ) : bookings === null || bookings.length === 0 ? (
           <p className="text-center text-gray-400 text-sm mt-8">예약 내역이 없습니다.</p>
         ) : (
           <>
@@ -87,10 +74,13 @@ export default function MyBookingsView({ onEdit }: Props) {
                     booking={b}
                     isPast={false}
                     confirmId={confirmId}
+                    pinInput={pinInput}
+                    pinError={pinError}
                     onEdit={() => onEdit(b)}
-                    onAskCancel={() => setConfirmId(b.id)}
-                    onCancelConfirm={() => handleCancel(b.id)}
-                    onCancelDismiss={() => setConfirmId(null)}
+                    onAskCancel={() => openConfirm(b.id)}
+                    onPinChange={(v) => { setPinInput(v); setPinError('') }}
+                    onCancelConfirm={() => handleCancel(b)}
+                    onCancelDismiss={() => { setConfirmId(null); setPinInput(''); setPinError('') }}
                   />
                 ))}
               </>
@@ -104,8 +94,11 @@ export default function MyBookingsView({ onEdit }: Props) {
                     booking={b}
                     isPast
                     confirmId={confirmId}
+                    pinInput={pinInput}
+                    pinError={pinError}
                     onEdit={() => {}}
                     onAskCancel={() => {}}
+                    onPinChange={() => {}}
                     onCancelConfirm={() => {}}
                     onCancelDismiss={() => {}}
                   />
@@ -123,15 +116,18 @@ interface CardProps {
   booking: Booking
   isPast: boolean
   confirmId: string | null
+  pinInput: string
+  pinError: string
   onEdit: () => void
   onAskCancel: () => void
+  onPinChange: (v: string) => void
   onCancelConfirm: () => void
   onCancelDismiss: () => void
 }
 
 function BookingCard({
-  booking, isPast, confirmId,
-  onEdit, onAskCancel, onCancelConfirm, onCancelDismiss,
+  booking, isPast, confirmId, pinInput, pinError,
+  onEdit, onAskCancel, onPinChange, onCancelConfirm, onCancelDismiss,
 }: CardProps) {
   const isConfirming = confirmId === booking.id
   return (
@@ -149,7 +145,7 @@ function BookingCard({
           </span>
         </div>
         <div className="mt-2 text-xs text-gray-600">
-          {booking.group_stage} · {booking.member_count}명 · {booking.leader_name}({booking.baptismal_name})
+          {booking.group_stage} · {booking.member_count}명
         </div>
       </div>
 
@@ -164,13 +160,26 @@ function BookingCard({
         </div>
       )}
       {isConfirming && (
-        <div className="flex divide-x divide-gray-100 border-t border-gray-100 bg-red-50">
-          <button onClick={onCancelDismiss} className="flex-1 py-2.5 text-xs text-gray-500 font-medium text-center">
-            아니오
-          </button>
-          <button onClick={onCancelConfirm} className="flex-1 py-2.5 text-xs text-red-600 font-bold text-center">
-            예약 취소
-          </button>
+        <div className="border-t border-gray-100 bg-red-50 px-4 py-3">
+          <p className="text-xs text-gray-600 mb-2">개인 비밀번호를 입력해 취소를 확인하세요.</p>
+          <input
+            type="password"
+            inputMode="numeric"
+            maxLength={4}
+            className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm mb-2 bg-white focus:outline-none focus:border-red-300"
+            placeholder="●●●●"
+            value={pinInput}
+            onChange={(e) => onPinChange(e.target.value.replace(/\D/g, '').slice(0, 4))}
+          />
+          {pinError && <p className="text-red-500 text-xs mb-2">{pinError}</p>}
+          <div className="flex gap-2">
+            <button onClick={onCancelDismiss} className="flex-1 py-2 text-xs text-gray-500 border border-gray-200 rounded-xl bg-white">
+              아니오
+            </button>
+            <button onClick={onCancelConfirm} className="flex-1 py-2 text-xs text-red-600 font-bold border border-red-200 rounded-xl">
+              예약 취소
+            </button>
+          </div>
         </div>
       )}
     </div>
