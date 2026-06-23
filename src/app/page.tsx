@@ -45,9 +45,17 @@ export default function Home() {
   return (
     <div className="flex flex-col min-h-svh bg-white">
       {/* Header */}
-      <header className="flex items-center justify-between px-4 py-3 bg-white border-b border-gray-100">
-        <h1 className="text-base font-bold text-gray-900">청년성서모임 공간 예약</h1>
-        <a href="/admin" className="text-[11px] text-gray-300 hover:text-gray-500">관리자</a>
+      <header className="px-4 pt-5 pb-4 bg-white border-b border-gray-100">
+        <div className="flex items-start justify-between">
+          <div>
+            <p className="text-[11px] text-gray-400 font-medium tracking-wide mb-0.5">청년성서모임 한처음</p>
+            <h1 className="text-xl font-bold text-gray-900 leading-tight">
+              &lsquo;그룹공부&rsquo; 예약
+            </h1>
+            <p className="text-[12px] text-gray-400 mt-1">장소 : 가톨릭 청소년 센터</p>
+          </div>
+          <a href="/admin" className="text-[11px] text-gray-300 hover:text-gray-500 mt-1">관리자</a>
+        </div>
       </header>
 
       {/* 공지사항 */}
