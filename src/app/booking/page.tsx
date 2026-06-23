@@ -10,9 +10,10 @@ import BookingGrid from '@/components/BookingGrid'
 import BookingModal from '@/components/BookingModal'
 import MyBookingsView from '@/components/MyBookingsView'
 import AllBookingsView from '@/components/AllBookingsView'
+import ResourceView from '@/components/ResourceView'
 
 const IDENTITY_KEY = 'ybm_identity'
-type Tab = 'grid' | 'mine' | 'all'
+type Tab = 'grid' | 'mine' | 'all' | 'resources'
 
 export default function BookingPage() {
   const router = useRouter()
@@ -80,7 +81,7 @@ export default function BookingPage() {
 
       {/* Tabs */}
       <div className="flex bg-white border-b border-gray-100 px-4 gap-1">
-        {([['grid', '공간 예약'], ['all', '전체 현황'], ['mine', '내 예약']] as const).map(([id, label]) => (
+        {([['grid', '공간 예약'], ['all', '전체 현황'], ['mine', '내 예약'], ['resources', '자료실']] as const).map(([id, label]) => (
           <button
             key={id}
             onClick={() => setTab(id)}
@@ -108,6 +109,8 @@ export default function BookingPage() {
         </>
       ) : tab === 'all' ? (
         <AllBookingsView />
+      ) : tab === 'resources' ? (
+        <ResourceView />
       ) : (
         <MyBookingsView identity={identity} onEdit={openEdit} />
       )}

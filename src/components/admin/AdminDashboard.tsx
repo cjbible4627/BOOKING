@@ -7,8 +7,9 @@ import RoomManager from './RoomManager'
 import BlockManager from './BlockManager'
 import ExportView from './ExportView'
 import NoticeManager from './NoticeManager'
+import ResourceManager from './ResourceManager'
 
-type Tab = 'bookings' | 'rooms' | 'blocks' | 'export' | 'notices'
+type Tab = 'bookings' | 'rooms' | 'blocks' | 'export' | 'notices' | 'resources'
 
 export default function AdminDashboard() {
   const router = useRouter()
@@ -42,18 +43,19 @@ export default function AdminDashboard() {
         </div>
       </header>
 
-      <div className="flex bg-white border-b border-gray-100 px-4 gap-1">
+      <div className="flex bg-white border-b border-gray-100 px-4 gap-1 overflow-x-auto scrollbar-none">
         {([
-          ['bookings', '예약 현황'],
-          ['rooms',    '방 관리'],
-          ['blocks',   '차단 관리'],
-          ['notices',  '공지사항'],
-          ['export',   '내보내기'],
+          ['bookings',  '예약 현황'],
+          ['rooms',     '방 관리'],
+          ['blocks',    '차단 관리'],
+          ['notices',   '공지사항'],
+          ['resources', '자료실'],
+          ['export',    '📥 다운로드'],
         ] as const).map(([id, label]) => (
           <button
             key={id}
             onClick={() => setTab(id)}
-            className={`py-2.5 px-3 text-sm font-medium border-b-2 transition-colors ${
+            className={`py-2.5 px-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap flex-shrink-0 ${
               tab === id
                 ? 'border-blue-600 text-blue-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700'
@@ -65,11 +67,12 @@ export default function AdminDashboard() {
       </div>
 
       <div className="flex-1 overflow-y-auto">
-        {tab === 'bookings' && <AdminBookings />}
-        {tab === 'rooms'    && <RoomManager />}
-        {tab === 'blocks'   && <BlockManager />}
-        {tab === 'notices'  && <NoticeManager />}
-        {tab === 'export'   && <ExportView />}
+        {tab === 'bookings'  && <AdminBookings />}
+        {tab === 'rooms'     && <RoomManager />}
+        {tab === 'blocks'    && <BlockManager />}
+        {tab === 'notices'   && <NoticeManager />}
+        {tab === 'resources' && <ResourceManager />}
+        {tab === 'export'    && <ExportView />}
       </div>
     </div>
   )

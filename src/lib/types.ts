@@ -51,3 +51,14 @@ export interface SelectedSlot {
   date: string
   start_time: string
 }
+
+export interface Resource {
+  id: string
+  type: 'file' | 'link'
+  title: string
+  url: string | null
+  file_name: string | null
+  file_size: number | null
+  is_active: boolean
+  created_at: string
+}

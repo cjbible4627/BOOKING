@@ -167,6 +167,9 @@ export default function ExportView() {
   return (
     <div className="px-4 py-4 max-w-2xl">
 
+      {/* 설명 */}
+      <p className="text-xs text-gray-500 mb-4">예약 현황을 엑셀로 다운로드 받을 수 있습니다.</p>
+
       {/* 기간 프리셋 */}
       <p className="text-sm font-bold text-gray-800 mb-3">기간 선택</p>
       <div className="flex gap-2 mb-3 flex-wrap">

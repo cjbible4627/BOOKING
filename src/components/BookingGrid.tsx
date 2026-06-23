@@ -89,6 +89,13 @@ function BookingPopup({ booking, rooms, onClose }: PopupProps) {
   )
 }
 
+const COLUMN_COLORS = [
+  { header: 'bg-blue-500 text-white',    empty: 'hover:bg-blue-100 active:bg-blue-200',    tint: 'bg-blue-50' },
+  { header: 'bg-emerald-500 text-white', empty: 'hover:bg-emerald-100 active:bg-emerald-200', tint: 'bg-emerald-50' },
+  { header: 'bg-amber-500 text-white',   empty: 'hover:bg-amber-100 active:bg-amber-200',  tint: 'bg-amber-50' },
+  { header: 'bg-purple-500 text-white',  empty: 'hover:bg-purple-100 active:bg-purple-200', tint: 'bg-purple-50' },
+]
+
 export default function BookingGrid({ date, bookings, rooms, blockedPeriods, onSlotClick }: Props) {
   const today = new Date().toLocaleDateString('sv-SE')
   const activeRooms = rooms.filter(r => r.is_active)
@@ -98,16 +105,19 @@ export default function BookingGrid({ date, bookings, rooms, blockedPeriods, onS
     <>
       <div className="overflow-x-auto overflow-y-auto flex-1">
         <table className="border-collapse text-xs w-full" style={{ minWidth: '320px' }}>
-          <thead className="sticky top-0 z-10 bg-white">
+          <thead className="sticky top-0 z-10">
             <tr>
-              <th className="w-[52px] border border-gray-200 bg-gray-50 py-2 text-gray-400 font-normal text-[11px]">
+              <th className="w-[52px] border-2 border-gray-400 bg-gray-100 py-2 text-black font-bold text-[11px]">
                 시간
               </th>
-              {activeRooms.map(r => (
-                <th key={r.id} className="border border-gray-200 bg-gray-50 py-2 text-gray-700 font-semibold text-[12px] text-center">
-                  {r.name}
-                </th>
-              ))}
+              {activeRooms.map((r, i) => {
+                const col = COLUMN_COLORS[i % COLUMN_COLORS.length]
+                return (
+                  <th key={r.id} className={`border-2 border-gray-400 py-2.5 font-bold text-[13px] text-center ${col.header}`}>
+                    {r.name}
+                  </th>
+                )
+              })}
             </tr>
           </thead>
           <tbody>
@@ -116,11 +126,12 @@ export default function BookingGrid({ date, bookings, rooms, blockedPeriods, onS
               const blocked = !past && checkSlotBlocked(blockedPeriods, date, time)
 
               return (
-                <tr key={time} className={past || blocked ? 'bg-gray-50' : 'bg-white'}>
-                  <td className="border border-gray-200 text-center text-gray-400 text-[11px] py-1 w-[52px] align-middle">
+                <tr key={time}>
+                  <td className="border-2 border-gray-300 text-center text-black font-bold text-[11px] py-1 w-[52px] align-middle bg-gray-50">
                     {time}
                   </td>
-                  {activeRooms.map(room => {
+                  {activeRooms.map((room, i) => {
+                    const col = COLUMN_COLORS[i % COLUMN_COLORS.length]
                     const booking = getBookingAt(bookings, room.id, time)
 
                     if (booking && booking.start_time !== time) return null
@@ -132,17 +143,17 @@ export default function BookingGrid({ date, bookings, rooms, blockedPeriods, onS
                         <td
                           key={room.id}
                           rowSpan={span}
-                          className={`border border-gray-200 ${c.cell} align-top p-1.5 cursor-pointer active:opacity-80`}
+                          className={`border-2 border-gray-300 ${c.cell} align-top p-1.5 cursor-pointer active:opacity-80`}
                           onClick={() => setPopup(booking)}
                         >
                           <div className="leading-tight">
-                            <div className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full inline-block mb-1 ${c.badge}`}>
+                            <div className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full inline-block mb-1 ${c.badge}`}>
                               {booking.group_stage}
                             </div>
-                            <div className={`font-semibold truncate text-[11px] ${c.name}`}>
+                            <div className={`font-bold truncate text-[11px] text-black`}>
                               {booking.leader_name}
                             </div>
-                            <div className={`truncate text-[10px] ${c.sub}`}>
+                            <div className={`truncate text-[10px] font-semibold ${c.sub}`}>
                               {booking.member_count}명
                             </div>
                           </div>
@@ -152,8 +163,8 @@ export default function BookingGrid({ date, bookings, rooms, blockedPeriods, onS
 
                     if (past || blocked) {
                       return (
-                        <td key={room.id} className={`border border-gray-200 h-12 ${blocked ? 'bg-red-50' : 'bg-gray-50'}`}>
-                          {blocked && <span className="flex items-center justify-center h-full text-[10px] text-red-300">차단</span>}
+                        <td key={room.id} className={`border-2 border-gray-300 h-12 ${blocked ? 'bg-red-50' : 'bg-gray-100'}`}>
+                          {blocked && <span className="flex items-center justify-center h-full text-[10px] text-red-400 font-bold">차단</span>}
                         </td>
                       )
                     }
@@ -161,7 +172,7 @@ export default function BookingGrid({ date, bookings, rooms, blockedPeriods, onS
                     return (
                       <td
                         key={room.id}
-                        className="border border-gray-200 h-12 text-center text-gray-300 text-lg cursor-pointer hover:bg-blue-50 active:bg-blue-100 transition-colors select-none"
+                        className={`border-2 border-gray-300 h-12 text-center text-gray-400 text-lg cursor-pointer transition-colors select-none ${col.tint} ${col.empty}`}
                         onClick={() => onSlotClick({ room_id: room.id, date, start_time: time })}
                       >
                         +

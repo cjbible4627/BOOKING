@@ -25,7 +25,6 @@ function buildGrid(year: number, month: number) {
   const firstDow    = new Date(year, month, 1).getDay()
   const daysInMonth = new Date(year, month + 1, 0).getDate()
   const prevLast    = new Date(year, month, 0).getDate()
-
   const cells: Array<{ iso: string; day: number; cur: boolean }> = []
 
   const py = month === 0 ? year - 1 : year
@@ -90,7 +89,7 @@ export default function AllBookingsView() {
     grouped.set(b.date, arr)
   }
 
-  const cells       = buildGrid(year, month)
+  const cells        = buildGrid(year, month)
   const selectedList = selected ? (grouped.get(selected) ?? []) : []
 
   function roomName(id: string) {
@@ -98,99 +97,99 @@ export default function AllBookingsView() {
   }
 
   return (
-    <div className="flex-1 overflow-y-auto pb-4">
+    <div className="flex-1 overflow-y-auto pb-4 bg-white">
 
       {/* Month navigation */}
       <div className="flex items-center justify-between px-4 py-3">
         <button
           onClick={prevMonth}
-          className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-700 text-xl"
+          className="w-8 h-8 flex items-center justify-center text-black text-xl font-bold"
         >
           ‹
         </button>
-        <span className="font-semibold text-gray-800">{year}년 {month + 1}월</span>
+        <span className="font-extrabold text-black text-base">{year}년 {month + 1}월</span>
         <button
           onClick={nextMonth}
-          className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-700 text-xl"
+          className="w-8 h-8 flex items-center justify-center text-black text-xl font-bold"
         >
           ›
         </button>
       </div>
 
-      {/* Day-of-week header */}
-      <div className="grid grid-cols-7 px-3 mb-1">
-        {DOW.map((d, i) => (
-          <div
-            key={d}
-            className={`text-center text-[11px] py-1 font-medium
-              ${i === 0 ? 'text-red-400' : i === 6 ? 'text-blue-400' : 'text-gray-400'}`}
-          >
-            {d}
-          </div>
-        ))}
-      </div>
+      {/* Calendar card — sky background wraps DOW header + grid only */}
+      <div className="mx-4 mb-4 bg-sky-100 rounded-2xl overflow-hidden">
 
-      {/* Calendar grid */}
-      {loading ? (
-        <p className="text-center text-gray-300 text-sm mt-10">불러오는 중...</p>
-      ) : (
-        <div className="grid grid-cols-7 px-3 gap-y-0.5">
-          {cells.map((cell, i) => {
-            const dayBks  = grouped.get(cell.iso) ?? []
-            const isToday = cell.iso === todayIso
-            const isSel   = cell.iso === selected
-            const dow     = i % 7
-
-            return (
-              <div
-                key={i}
-                onClick={() => {
-                  if (!cell.cur) return
-                  setSelected(prev => prev === cell.iso ? null : cell.iso)
-                }}
-                className={`flex flex-col items-center pt-1 pb-1.5 rounded-xl min-h-[50px]
-                  ${cell.cur ? 'cursor-pointer active:bg-gray-100' : 'opacity-25 pointer-events-none'}
-                  ${isSel ? 'bg-blue-50' : ''}
-                `}
-              >
-                {/* Day number */}
-                <div
-                  className={`w-7 h-7 flex items-center justify-center rounded-full text-[12px]
-                    ${isToday || isSel
-                      ? 'bg-blue-600 text-white font-bold'
-                      : dow === 0
-                        ? 'text-red-400'
-                        : dow === 6
-                          ? 'text-blue-400'
-                          : 'text-gray-800'
-                    }
-                  `}
-                >
-                  {cell.day}
-                </div>
-
-                {/* Booking dots */}
-                {dayBks.length > 0 && (
-                  <div className="flex gap-0.5 justify-center mt-0.5 flex-wrap max-w-[26px]">
-                    {dayBks.slice(0, 3).map((b, j) => (
-                      <div
-                        key={j}
-                        className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-                        style={{ backgroundColor: DOT_COLOR[b.group_stage] }}
-                      />
-                    ))}
-                    {dayBks.length > 3 && (
-                      <span className="text-[8px] text-gray-400 leading-none">
-                        +{dayBks.length - 3}
-                      </span>
-                    )}
-                  </div>
-                )}
-              </div>
-            )
-          })}
+        {/* Day-of-week header */}
+        <div className="grid grid-cols-7 pt-3 px-2">
+          {DOW.map((d, i) => (
+            <div
+              key={d}
+              className={`text-center text-[11px] py-1 font-extrabold ${
+                i === 0 ? 'text-red-500' : i === 6 ? 'text-blue-600' : 'text-black'
+              }`}
+            >
+              {d}
+            </div>
+          ))}
         </div>
-      )}
+
+        {/* Calendar grid */}
+        {loading ? (
+          <p className="text-center text-black font-semibold text-sm py-10">불러오는 중...</p>
+        ) : (
+          <div className="grid grid-cols-7 px-2 gap-1 pb-3 pt-1">
+            {cells.map((cell, i) => {
+              const dayBks  = grouped.get(cell.iso) ?? []
+              const isToday = cell.iso === todayIso
+              const isSel   = cell.iso === selected
+              const dow     = i % 7
+              return (
+                <div
+                  key={i}
+                  onClick={() => {
+                    if (!cell.cur) return
+                    setSelected(prev => prev === cell.iso ? null : cell.iso)
+                  }}
+                  className={`flex flex-col items-center pt-1.5 pb-1.5 rounded-xl min-h-[50px] transition-colors ${
+                    cell.cur ? 'cursor-pointer' : 'opacity-25 pointer-events-none'
+                  } ${isSel ? 'bg-blue-100' : 'bg-white'}`}
+                >
+                  <div
+                    className={`w-7 h-7 flex items-center justify-center rounded-full text-[13px] font-semibold ${
+                      isToday
+                        ? 'bg-blue-600 text-white font-bold'
+                        : dow === 0
+                          ? 'text-red-500'
+                          : dow === 6
+                            ? 'text-blue-500'
+                            : 'text-black'
+                    }`}
+                  >
+                    {cell.day}
+                  </div>
+
+                  {dayBks.length > 0 && (
+                    <div className="flex flex-col gap-px w-[70%] mt-1">
+                      {dayBks.slice(0, 3).map((b, j) => (
+                        <div
+                          key={j}
+                          className="h-[3px] rounded-full w-full"
+                          style={{ backgroundColor: DOT_COLOR[b.group_stage] }}
+                        />
+                      ))}
+                      {dayBks.length > 3 && (
+                        <span className="text-[8px] text-gray-500 font-bold text-center leading-none mt-px">
+                          +{dayBks.length - 3}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
 
       {/* Bottom sheet popup */}
       {selected && (
@@ -200,35 +199,32 @@ export default function AllBookingsView() {
         >
           <div className="absolute inset-0 bg-black/30" />
           <div
-            className="relative w-full bg-white rounded-t-2xl pt-2 shadow-2xl max-h-[65vh] flex flex-col"
+            className="relative w-full bg-white rounded-t-2xl pt-2 shadow-2xl max-h-[65vh] flex flex-col border-t-2 border-black"
             style={{ paddingBottom: 'max(2rem, env(safe-area-inset-bottom))' }}
             onClick={e => e.stopPropagation()}
           >
-            {/* Handle */}
-            <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-4" />
+            <div className="w-10 h-1 bg-black rounded-full mx-auto mb-4 opacity-20" />
 
-            {/* Header */}
             <div className="flex items-start justify-between px-5 mb-3">
               <div>
-                <p className="font-bold text-gray-900 text-[15px]">
+                <p className="font-extrabold text-black text-[15px]">
                   {fmtDate(selected)}
                 </p>
-                <p className="text-[12px] text-gray-400 mt-0.5">
+                <p className="text-[12px] text-black font-semibold mt-0.5">
                   예약 {selectedList.length}건
                 </p>
               </div>
               <button
                 onClick={() => setSelected(null)}
-                className="text-gray-300 hover:text-gray-500 text-xl mt-0.5 leading-none"
+                className="text-black text-xl mt-0.5 leading-none font-bold"
               >
                 ✕
               </button>
             </div>
 
-            {/* Booking list */}
             <div className="overflow-y-auto px-5">
               {selectedList.length === 0 ? (
-                <p className="text-center text-gray-300 text-sm py-8">
+                <p className="text-center text-black font-semibold text-sm py-8">
                   이 날 예약이 없습니다.
                 </p>
               ) : (
@@ -238,24 +234,24 @@ export default function AllBookingsView() {
                     <div
                       key={b.id}
                       className={`flex items-center gap-3 py-3 ${
-                        i < selectedList.length - 1 ? 'border-b border-gray-100' : ''
+                        i < selectedList.length - 1 ? 'border-b-2 border-black' : ''
                       }`}
                     >
-                      <span className={`text-[10px] font-semibold px-2.5 py-1 rounded-full whitespace-nowrap flex-shrink-0 ${c.badge}`}>
+                      <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full whitespace-nowrap flex-shrink-0 ${c.badge}`}>
                         {b.group_stage}
                       </span>
                       <div className="flex-1 min-w-0">
-                        <p className="text-[13px] font-semibold text-gray-900 truncate">
+                        <p className="text-[13px] font-bold text-black truncate">
                           {b.leader_name}
-                          <span className="font-normal text-gray-400 ml-1">
+                          <span className="font-semibold text-black ml-1">
                             ({b.baptismal_name})
                           </span>
                         </p>
-                        <p className="text-[11px] text-gray-400 mt-0.5">
+                        <p className="text-[11px] text-black font-semibold mt-0.5">
                           {b.start_time}–{b.end_time} · {b.member_count}명
                         </p>
                       </div>
-                      <span className="text-[11px] text-gray-400 bg-gray-50 px-2 py-1 rounded-lg whitespace-nowrap flex-shrink-0">
+                      <span className="text-[11px] font-bold text-black border border-black px-2 py-1 rounded-lg whitespace-nowrap flex-shrink-0">
                         {roomName(b.room_id)}
                       </span>
                     </div>
