@@ -45,3 +45,20 @@ export async function deleteSubmission(id: string): Promise<void> {
   })
   if (!res.ok) throw new Error('삭제에 실패했습니다.')
 }
+
+export async function cleanupFiles(
+  formId: string,
+  roundId?: string,
+): Promise<{ deleted: number; updated: number }> {
+  const res = await fetch('/api/admin/files', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-admin-token': adminToken() },
+    body: JSON.stringify({ formId, roundId }),
+  })
+  if (!res.ok) {
+    if (res.status === 401) throw new Error('관리자 인증이 만료되었습니다. 다시 로그인해주세요.')
+    throw new Error('파일 정리에 실패했습니다.')
+  }
+  const json = await res.json()
+  return { deleted: json.deleted ?? 0, updated: json.updated ?? 0 }
+}

@@ -1,9 +1,10 @@
 'use client'
 import { useState, useEffect } from 'react'
 import * as XLSX from 'xlsx'
+import JSZip from 'jszip'
 import type { FormDef, FormRound, FormSubmission, AnswerEntry } from '@/lib/form-types'
 import { getRounds } from '@/lib/form-storage'
-import { fetchSubmissions, deleteSubmission } from '@/lib/form-client'
+import { fetchSubmissions, deleteSubmission, cleanupFiles } from '@/lib/form-client'
 
 interface Props { form: FormDef }
 
@@ -29,6 +30,10 @@ export default function FormSubmissions({ form }: Props) {
   const [error, setError]   = useState('')
   const [openId, setOpenId] = useState<string | null>(null)
   const [confirmDel, setConfirmDel] = useState<string | null>(null)
+  const [zipping, setZipping] = useState(false)
+  const [confirmCleanup, setConfirmCleanup] = useState(false)
+  const [cleaning, setCleaning] = useState(false)
+  const [cleanupResult, setCleanupResult] = useState<string | null>(null)
 
   async function load() {
     setLoading(true)
@@ -103,6 +108,58 @@ export default function FormSubmissions({ form }: Props) {
     URL.revokeObjectURL(a.href)
   }
 
+  // 첨부파일 ZIP 다운로드
+  async function downloadZip() {
+    const fileEntries: { name: string; url: string }[] = []
+    filtered.forEach((s, idx) => {
+      s.answers.fields.forEach((f) => {
+        if (f.type === 'file' && f.value && typeof f.value === 'string' && !f.value.startsWith('(')) {
+          const rawName = decodeURIComponent(f.value.split('/').pop() ?? 'file')
+          fileEntries.push({ name: `${filtered.length - idx}_${rawName}`, url: f.value })
+        }
+      })
+    })
+    if (fileEntries.length === 0) {
+      alert('이 목록에 첨부 파일이 없습니다.')
+      return
+    }
+    setZipping(true)
+    try {
+      const zip = new JSZip()
+      await Promise.all(
+        fileEntries.map(async ({ name, url }) => {
+          const res = await fetch(url)
+          if (res.ok) zip.file(name, await res.blob())
+        }),
+      )
+      const blob = await zip.generateAsync({ type: 'blob' })
+      const today = new Date().toLocaleDateString('sv-SE')
+      const a = document.createElement('a')
+      a.href = URL.createObjectURL(blob)
+      a.download = `${form.title}_첨부파일${roundSuffix()}_${today}.zip`
+      a.click()
+      URL.revokeObjectURL(a.href)
+    } catch {
+      alert('ZIP 생성 중 오류가 발생했습니다.')
+    }
+    setZipping(false)
+  }
+
+  async function handleCleanup() {
+    setCleaning(true)
+    setCleanupResult(null)
+    try {
+      const rid = roundFilter === 'all' || roundFilter === 'none' ? undefined : roundFilter
+      const result = await cleanupFiles(form.id, rid)
+      setCleanupResult(`파일 ${result.deleted}개 삭제 완료 (제출 ${result.updated}건 업데이트)`)
+      await load()
+    } catch (e) {
+      setCleanupResult(e instanceof Error ? e.message : '오류가 발생했습니다.')
+    }
+    setCleaning(false)
+    setConfirmCleanup(false)
+  }
+
   function downloadExcel() {
     if (filtered.length === 0) return
     const { headers: HEADERS, rows: dataRows } = buildTable()
@@ -155,7 +212,7 @@ export default function FormSubmissions({ form }: Props) {
         </div>
       )}
 
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-2">
         <p className="text-sm text-gray-600">
           제출&nbsp;<span className="font-bold text-gray-900">{filtered.length}건</span>
           {roundFilter !== 'all' && <span className="text-gray-400"> / 전체 {subs.length}</span>}
@@ -177,6 +234,54 @@ export default function FormSubmissions({ form }: Props) {
           </div>
         )}
       </div>
+
+      {/* 첨부파일 백업 & 정리 */}
+      <div className="flex gap-2 mb-4">
+        <button
+          onClick={downloadZip}
+          disabled={zipping || filtered.length === 0}
+          className="flex items-center gap-1 px-3 py-2 bg-blue-50 border border-blue-200 text-blue-700 rounded-xl text-xs font-bold disabled:opacity-40 active:scale-95 transition-transform"
+        >
+          {zipping ? '⏳ 압축 중...' : '📦 첨부파일 ZIP'}
+        </button>
+        <button
+          onClick={() => { setConfirmCleanup(true); setCleanupResult(null) }}
+          disabled={filtered.length === 0}
+          className="flex items-center gap-1 px-3 py-2 bg-red-50 border border-red-200 text-red-600 rounded-xl text-xs font-bold disabled:opacity-40 active:scale-95 transition-transform"
+        >
+          🗑 파일 일괄 삭제
+        </button>
+      </div>
+
+      {cleanupResult && (
+        <div className="mb-3 px-3 py-2 bg-gray-100 rounded-xl text-xs text-gray-700 font-semibold">{cleanupResult}</div>
+      )}
+
+      {confirmCleanup && (
+        <div className="mb-4 border-2 border-red-200 rounded-2xl p-4 bg-red-50">
+          <p className="text-sm font-bold text-red-700 mb-1">⚠️ 첨부파일 일괄 삭제</p>
+          <p className="text-xs text-red-600 mb-3">
+            {roundFilter !== 'all' && roundFilter !== 'none'
+              ? `[${roundName(roundFilter)}] 회차`
+              : '현재 보이는 전체'} 첨부파일을 Storage에서 삭제하고, 답변에 "(파일 삭제됨)"으로 표시합니다. 이 작업은 되돌릴 수 없습니다.
+          </p>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setConfirmCleanup(false)}
+              className="flex-1 py-2 text-xs text-gray-600 border border-gray-200 rounded-lg bg-white"
+            >
+              취소
+            </button>
+            <button
+              onClick={handleCleanup}
+              disabled={cleaning}
+              className="flex-1 py-2 text-xs font-bold text-white bg-red-500 rounded-lg disabled:opacity-50"
+            >
+              {cleaning ? '삭제 중...' : '삭제 확인'}
+            </button>
+          </div>
+        </div>
+      )}
 
       {loading ? (
         <div className="py-12 text-center text-sm text-gray-400">불러오는 중...</div>
