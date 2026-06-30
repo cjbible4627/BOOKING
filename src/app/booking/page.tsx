@@ -70,9 +70,20 @@ export default function BookingPage() {
             ←
           </button>
           <div className="min-w-0">
-            <span className="text-sm font-bold text-gray-900 truncate block">
-              {identity.name} ({identity.baptismal})
-            </span>
+            <div className="flex items-center gap-1.5">
+              <span className="text-sm font-bold text-gray-900 truncate">
+                {identity.name} ({identity.baptismal})
+              </span>
+              <button
+                onClick={() => {
+                  localStorage.removeItem(IDENTITY_KEY)
+                  setIdentity(null)
+                }}
+                className="text-[10px] text-gray-400 hover:text-gray-600 border border-gray-200 rounded px-1.5 py-0.5 flex-shrink-0"
+              >
+                변경
+              </button>
+            </div>
             <span className="text-[11px] text-gray-400">{identity.groupStage}</span>
           </div>
         </div>
