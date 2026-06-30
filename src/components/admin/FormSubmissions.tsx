@@ -12,6 +12,7 @@ function fmtValue(e: AnswerEntry): string {
   const v = e.value
   if (e.type === 'agree') return v === true ? '동의' : '미동의'
   if (e.type === 'checkbox') return Array.isArray(v) ? v.join(', ') : ''
+  if (e.type === 'file') return v ? String(v) : '(없음)'
   if (v === null || v === undefined) return ''
   return String(v)
 }
@@ -214,7 +215,20 @@ export default function FormSubmissions({ form }: Props) {
                       {s.answers.fields.map((f, i) => (
                         <div key={i}>
                           <dt className="text-[11px] font-semibold text-gray-400">{f.label || '(제목 없음)'}</dt>
-                          <dd className="text-sm text-gray-800 whitespace-pre-wrap">{fmtValue(f) || <span className="text-gray-300">—</span>}</dd>
+                          <dd className="text-sm text-gray-800 whitespace-pre-wrap">
+                            {f.type === 'file' && f.value ? (
+                              <a
+                                href={String(f.value)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1.5 text-blue-600 font-semibold underline underline-offset-2"
+                              >
+                                📎 {decodeURIComponent(String(f.value).split('/').pop() ?? '파일 보기')}
+                              </a>
+                            ) : (
+                              fmtValue(f) || <span className="text-gray-300">—</span>
+                            )}
+                          </dd>
                         </div>
                       ))}
                     </dl>

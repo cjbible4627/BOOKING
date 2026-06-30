@@ -15,6 +15,7 @@ function isEmpty(type: string, v: AnswerValue): boolean {
   if (type === 'checkbox') return !Array.isArray(v) || v.length === 0
   if (type === 'agree')    return v !== true
   if (type === 'number')   return v === null || v === undefined || v === '' || Number.isNaN(Number(v))
+  if (type === 'file')     return !v || String(v).trim() === ''
   return v === null || v === undefined || String(v).trim() === ''
 }
 

@@ -2,10 +2,10 @@
 
 export type FieldType =
   | 'short' | 'long' | 'radio' | 'checkbox' | 'dropdown'
-  | 'number' | 'date' | 'tel' | 'email' | 'agree'
+  | 'number' | 'date' | 'tel' | 'email' | 'agree' | 'file'
 
 export const FIELD_TYPES: FieldType[] = [
-  'short', 'long', 'radio', 'checkbox', 'dropdown', 'number', 'date', 'tel', 'email', 'agree',
+  'short', 'long', 'radio', 'checkbox', 'dropdown', 'number', 'date', 'tel', 'email', 'agree', 'file',
 ]
 
 export const FIELD_TYPE_LABELS: Record<FieldType, string> = {
@@ -19,6 +19,7 @@ export const FIELD_TYPE_LABELS: Record<FieldType, string> = {
   tel:      '전화',
   email:    '이메일',
   agree:    '동의체크',
+  file:     '파일첨부',
 }
 
 // 선택지를 갖는 필드 타입
