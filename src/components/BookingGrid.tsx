@@ -83,6 +83,12 @@ function BookingPopup({ booking, rooms, onClose }: PopupProps) {
             <span className="text-gray-400">인원</span>
             <span className="font-medium text-gray-800">{booking.member_count}명</span>
           </div>
+          {booking.note && (
+            <div className="pt-2 mt-2 border-t border-gray-100">
+              <p className="text-xs text-gray-400 mb-1">비고</p>
+              <p className="text-sm text-gray-700 whitespace-pre-wrap">{booking.note}</p>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -156,6 +162,11 @@ export default function BookingGrid({ date, bookings, rooms, blockedPeriods, onS
                             <div className={`truncate text-[10px] font-semibold ${c.sub}`}>
                               {booking.member_count}명
                             </div>
+                            {booking.note && (
+                              <div className="truncate text-[9px] text-gray-500 mt-0.5">
+                                💬 {booking.note}
+                              </div>
+                            )}
                           </div>
                         </td>
                       )

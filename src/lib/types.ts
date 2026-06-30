@@ -16,6 +16,7 @@ export interface Booking {
   baptismal_name: string
   group_stage: GroupStage
   member_count: number
+  note: string | null
   pin: string
   created_at: string
 }
@@ -29,6 +30,7 @@ export interface NewBooking {
   baptismal_name: string
   group_stage: GroupStage
   member_count: number
+  note?: string | null
   pin: string
 }
 

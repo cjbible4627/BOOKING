@@ -28,6 +28,7 @@ export default function BookingModal({ slot, editTarget, identity, onClose, onSa
   const isEdit = !!editTarget
   const [memberCount, setMemberCount] = useState('')
   const [endTime, setEndTime]         = useState('')
+  const [note, setNote]               = useState('')
   const [error, setError]             = useState('')
   const [loading, setLoading]         = useState(false)
 
@@ -38,10 +39,12 @@ export default function BookingModal({ slot, editTarget, identity, onClose, onSa
     if (isEdit && editTarget) {
       setMemberCount(String(editTarget.member_count))
       setEndTime(editTarget.end_time)
+      setNote(editTarget.note ?? '')
     } else {
       const opts = endOptions(slot!.start_time)
       setEndTime(opts.length >= 2 ? opts[1] : opts[0])
       setMemberCount('')
+      setNote('')
     }
     setError('')
   }, [source])
@@ -66,6 +69,7 @@ export default function BookingModal({ slot, editTarget, identity, onClose, onSa
       baptismal_name: identity.baptismal,
       group_stage: identity.groupStage,
       member_count: mc,
+      note: note.trim() || null,
       pin: identity.pin,
     }
 
@@ -138,6 +142,19 @@ export default function BookingModal({ slot, editTarget, identity, onClose, onSa
             value={memberCount}
             onChange={(e) => setMemberCount(e.target.value)}
             placeholder="0"
+          />
+        </label>
+
+        {/* 비고 */}
+        <label className="block mb-4">
+          <span className="text-xs text-gray-500 mb-1 block">비고 (선택)</span>
+          <textarea
+            className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-400 resize-none"
+            rows={2}
+            maxLength={100}
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            placeholder="간단한 메시지를 남겨주세요"
           />
         </label>
 
