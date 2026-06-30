@@ -73,27 +73,93 @@ export default function FormStats({ form }: Props) {
       return { label: f.label || '(제목 없음)', type: f.type, rows: [...counts.entries()].map(([option, count]) => ({ option, count })) }
     })
 
+  function makeHeaderSheet(data: (string | number)[][]): XLSX.WorkSheet {
+    const ws = XLSX.utils.aoa_to_sheet(data)
+    const ncols = data[0]?.length ?? 1
+    ws['!cols'] = Array.from({ length: ncols }, (_, i) => ({ wch: [20, 18, 8, 8][i] ?? 14 }))
+    for (let c = 0; c < ncols; c++) {
+      const ref = XLSX.utils.encode_cell({ r: 0, c })
+      if (ws[ref]) ws[ref].s = {
+        font: { bold: true, color: { rgb: 'FFFFFF' } },
+        fill: { patternType: 'solid', fgColor: { rgb: '1B5FA3' } },
+        alignment: { horizontal: 'center' },
+      }
+    }
+    return ws
+  }
+
+  function fmtValue(type: string, v: unknown): string {
+    if (type === 'agree') return v === true ? '동의' : '미동의'
+    if (type === 'checkbox') return Array.isArray(v) ? (v as string[]).join(', ') : ''
+    if (type === 'file') return v ? String(v) : '(없음)'
+    if (v === null || v === undefined) return ''
+    return String(v)
+  }
+
   function downloadExcel() {
     const wb = XLSX.utils.book_new()
-
-    const distRows: (string | number)[][] = [['질문', '옵션', '응답수', '비율(%)']]
-    for (const d of dists) {
-      const sum = d.rows.reduce((s, r) => s + r.count, 0)
-      d.rows.forEach((r, i) => {
-        distRows.push([i === 0 ? d.label : '', r.option, r.count, sum ? Math.round((r.count / sum) * 1000) / 10 : 0])
-      })
-    }
-    const ws1 = XLSX.utils.aoa_to_sheet(distRows)
-    ws1['!cols'] = [{ wch: 20 }, { wch: 18 }, { wch: 8 }, { wch: 8 }]
-    XLSX.utils.book_append_sheet(wb, ws1, '질문별분포')
-
-    const dailyRows: (string | number)[][] = [['날짜', '신청수'], ...daily.map(([d, c]) => [d, c])]
-    const ws2 = XLSX.utils.aoa_to_sheet(dailyRows)
-    ws2['!cols'] = [{ wch: 14 }, { wch: 8 }]
-    XLSX.utils.book_append_sheet(wb, ws2, '일별추이')
-
     const suffix = roundFilter === 'all' ? '' : roundFilter === 'none' ? '_미지정' : `_${roundName(roundFilter)}`
     const today = new Date().toLocaleDateString('sv-SE')
+
+    // ① 요약
+    const summaryData: (string | number)[][] = [
+      ['항목', '값'],
+      ['신청서', form.title],
+      ['필터', roundFilter === 'all' ? '전체' : roundFilter === 'none' ? '미지정' : roundName(roundFilter)],
+      ['총 신청', total],
+    ]
+    XLSX.utils.book_append_sheet(wb, makeHeaderSheet(summaryData), '요약')
+
+    // ② 전체 신청 목록
+    if (subs.length > 0) {
+      const labels: string[] = []
+      for (const s of subs) {
+        for (const f of s.answers.fields) {
+          if (!labels.includes(f.label || '(제목 없음)')) labels.push(f.label || '(제목 없음)')
+        }
+      }
+      const listHeaders = [...(useRounds ? ['회차'] : []), ...labels, '제출일시']
+      const listRows = subs.map(s => {
+        const byLabel = new Map(s.answers.fields.map(f => [f.label || '(제목 없음)', fmtValue(f.type, f.value)]))
+        return [
+          ...(useRounds ? [roundName(s.round_id)] : []),
+          ...labels.map(l => byLabel.get(l) ?? ''),
+          new Date(s.created_at).toLocaleString('ko-KR'),
+        ]
+      })
+      const listWs = makeHeaderSheet([listHeaders, ...listRows])
+      listWs['!cols'] = listHeaders.map(h => ({ wch: Math.max(10, h.length + 4) }))
+      listWs['!views'] = [{ state: 'frozen', xSplit: 0, ySplit: 1 }]
+      for (let r = 1; r <= listRows.length; r++) {
+        const zebra = r % 2 === 0 ? 'F5F7FA' : 'FFFFFF'
+        listHeaders.forEach((_, ci) => {
+          const ref = XLSX.utils.encode_cell({ r, c: ci })
+          if (listWs[ref]) listWs[ref].s = {
+            fill: { patternType: 'solid', fgColor: { rgb: zebra } },
+            alignment: { vertical: 'center', wrapText: true },
+            border: { bottom: { style: 'thin', color: { rgb: 'E0E0E0' } } },
+          }
+        })
+      }
+      XLSX.utils.book_append_sheet(wb, listWs, '신청목록')
+    }
+
+    // ③ 질문별 분포
+    if (dists.length > 0) {
+      const distRows: (string | number)[][] = [['질문', '옵션', '응답수', '비율(%)']]
+      for (const d of dists) {
+        const sum = d.rows.reduce((s, r) => s + r.count, 0)
+        d.rows.forEach((r, i) => {
+          distRows.push([i === 0 ? d.label : '', r.option, r.count, sum ? Math.round((r.count / sum) * 1000) / 10 : 0])
+        })
+      }
+      XLSX.utils.book_append_sheet(wb, makeHeaderSheet(distRows), '질문별분포')
+    }
+
+    // ④ 일별 추이
+    const dailyRows: (string | number)[][] = [['날짜', '신청수'], ...daily.map(([d, c]) => [d, c])]
+    XLSX.utils.book_append_sheet(wb, makeHeaderSheet(dailyRows), '일별추이')
+
     XLSX.writeFile(wb, `${form.title}_신청통계${suffix}_${today}.xlsx`)
   }
 
@@ -120,11 +186,13 @@ export default function FormStats({ form }: Props) {
 
       <div className="flex items-center justify-between mb-4">
         <p className="text-sm text-gray-600">총 신청 <span className="font-bold text-gray-900">{total}건</span></p>
-        {total > 0 && (
-          <button onClick={downloadExcel} className="flex items-center gap-1.5 px-4 py-2 bg-green-600 text-white rounded-xl text-xs font-bold active:scale-95 transition-transform">
-            ⬇ 통계 엑셀
-          </button>
-        )}
+        <button
+          onClick={downloadExcel}
+          disabled={total === 0}
+          className="flex items-center gap-1.5 px-4 py-2 bg-green-600 text-white rounded-xl text-xs font-bold active:scale-95 transition-transform disabled:opacity-40"
+        >
+          ⬇ 통계 엑셀
+        </button>
       </div>
 
       {total === 0 ? (
