@@ -7,6 +7,7 @@ import {
 import FormBuilder from './FormBuilder'
 import FormSubmissions from './FormSubmissions'
 import FormStats from './FormStats'
+import PrivacyConsentEditor from './PrivacyConsentEditor'
 
 type Sub = 'fields' | 'submissions' | 'stats'
 
@@ -93,6 +94,8 @@ export default function FormManager() {
   return (
     <div className="px-4 py-4 max-w-2xl">
       <p className="text-xs text-gray-500 mb-4">신청서를 만들고 질문을 직접 구성할 수 있습니다. 모집을 켜면 메인 화면에 노출됩니다.</p>
+
+      <PrivacyConsentEditor />
 
       {/* 새 폼 생성 */}
       <div className="flex gap-2 mb-5">
