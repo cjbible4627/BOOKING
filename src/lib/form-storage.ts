@@ -70,7 +70,7 @@ export async function createForm(title: string, key: string): Promise<FormDef> {
 
 export async function updateForm(
   id: string,
-  patch: Partial<Pick<FormDef, 'title' | 'description' | 'is_open' | 'open_mode' | 'current_round_id'>>,
+  patch: Partial<Pick<FormDef, 'title' | 'description' | 'is_open' | 'open_mode' | 'current_round_id' | 'open_at'>>,
 ): Promise<void> {
   const { error } = await supabase.from('forms').update(patch).eq('id', id)
   if (error) throw error

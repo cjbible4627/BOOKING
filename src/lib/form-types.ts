@@ -50,6 +50,7 @@ export interface FormDef {
   open_start: string | null // (legacy) 회차제 이전 단일 기간 — 현재 미사용
   open_end: string | null   // (legacy)
   current_round_id: string | null // 회차제일 때 현재 진행 회차
+  open_at: string | null    // 접수 시작 시각 (ISO) — 이 시각 전엔 카운트다운 표시
   sort_order: number
   is_active: boolean
   created_at: string

@@ -12,6 +12,12 @@ interface Props {
   onToggleOpen?: (next: boolean) => Promise<void>
 }
 
+function toLocalInput(iso: string): string {
+  const d = new Date(iso)
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
+
 export default function FormBuilder({ form, onToggleOpen }: Props) {
   const [fields, setFields] = useState<FormField[]>([])
   const [desc, setDesc]     = useState(form.description ?? '')
@@ -25,10 +31,24 @@ export default function FormBuilder({ form, onToggleOpen }: Props) {
   const [saved, setSaved] = useState(false)
   const [isOpen, setIsOpen] = useState(form.is_open)
   const [toggling, setToggling] = useState(false)
+  const [openAt, setOpenAt]     = useState<string | null>(form.open_at ?? null)
+  const [openAtInput, setOpenAtInput] = useState(form.open_at ? toLocalInput(form.open_at) : '')
+  const [openAtSaving, setOpenAtSaving] = useState(false)
+  const [openAtMsg, setOpenAtMsg] = useState('')
 
   function flashSaved() {
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
+  }
+
+  async function saveOpenAt() {
+    setOpenAtSaving(true)
+    const iso = openAtInput ? new Date(openAtInput).toISOString() : null
+    await updateForm(form.id, { open_at: iso })
+    setOpenAt(iso)
+    setOpenAtMsg(iso ? '저장되었습니다.' : '접수 제한이 해제되었습니다.')
+    setTimeout(() => setOpenAtMsg(''), 3000)
+    setOpenAtSaving(false)
   }
 
   async function load() {
@@ -219,6 +239,48 @@ export default function FormBuilder({ form, onToggleOpen }: Props) {
             </p>
           </div>
         )}
+      </div>
+
+      {/* 접수 시작 시각 설정 */}
+      <div className="rounded-2xl border-2 border-gray-200 p-4 mb-5">
+        <span className="text-xs font-semibold text-gray-500 mb-2 block">⏰ 접수 시작 시각</span>
+        <p className="text-[11px] text-gray-400 mb-3">
+          설정한 시각 이전에는 신청서에 카운트다운이 표시되고 제출이 불가합니다. 비워두면 제한 없이 접수 가능합니다.
+        </p>
+        {openAt && (
+          <div className={`rounded-xl border px-3 py-2 mb-3 text-xs font-semibold ${
+            new Date() < new Date(openAt) ? 'border-amber-200 bg-amber-50 text-amber-700' : 'border-green-200 bg-green-50 text-green-700'
+          }`}>
+            {new Date() < new Date(openAt)
+              ? `🔒 접수 대기 중 — ${new Date(openAt).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })} 부터`
+              : `🔓 접수 중 — ${new Date(openAt).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })} 에 개방됨`}
+          </div>
+        )}
+        <div className="flex gap-2 items-end">
+          <input
+            type="datetime-local"
+            value={openAtInput}
+            onChange={e => setOpenAtInput(e.target.value)}
+            className="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-400"
+          />
+          <button
+            onClick={saveOpenAt}
+            disabled={openAtSaving}
+            className="px-3 py-2 bg-blue-600 text-white rounded-xl text-xs font-bold disabled:opacity-40 flex-shrink-0"
+          >
+            {openAtSaving ? '...' : '저장'}
+          </button>
+          {openAt && (
+            <button
+              onClick={() => { setOpenAtInput(''); setOpenAt(null); updateForm(form.id, { open_at: null }) }}
+              disabled={openAtSaving}
+              className="px-3 py-2 bg-white border border-red-200 text-red-500 rounded-xl text-xs font-bold disabled:opacity-40 flex-shrink-0"
+            >
+              해제
+            </button>
+          )}
+        </div>
+        {openAtMsg && <p className="text-xs font-semibold text-green-600 mt-2">{openAtMsg}</p>}
       </div>
 
       {/* 안내문구 */}
