@@ -1,10 +1,10 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import type { Booking, Room, SelectedSlot, UserIdentity } from '@/lib/types'
+import type { Booking, Room, SelectedSlot, UserIdentity, Notice } from '@/lib/types'
 import type { BlockedPeriod } from '@/lib/admin-storage'
 import { bookingsForDate } from '@/lib/storage'
-import { getRooms, getBlocked } from '@/lib/admin-storage'
+import { getRooms, getBlocked, getNotices } from '@/lib/admin-storage'
 import DateTabs from '@/components/DateTabs'
 import BookingGrid from '@/components/BookingGrid'
 import BookingModal from '@/components/BookingModal'
@@ -26,6 +26,7 @@ export default function BookingPage() {
   const [bookings, setBookings]         = useState<Booking[]>([])
   const [rooms, setRooms]               = useState<Room[]>([])
   const [blockedPeriods, setBlocked]    = useState<BlockedPeriod[]>([])
+  const [bookingNotices, setBookingNotices] = useState<Notice[]>([])
   const [slot, setSlot]                 = useState<SelectedSlot | null>(null)
   const [editTarget, setEditTarget]     = useState<Booking | null>(null)
 
@@ -36,6 +37,7 @@ export default function BookingPage() {
     } catch {}
     getRooms().then(setRooms)
     getBlocked().then(setBlocked)
+    getNotices('booking').then(setBookingNotices)
   }, [])
 
   const refresh = useCallback(() => {
@@ -93,6 +95,16 @@ export default function BookingPage() {
           </button>
         ))}
       </div>
+
+      {/* 예약 전용 공지사항 */}
+      {bookingNotices.length > 0 && (
+        <div className="mx-4 mt-3 mb-1 rounded-2xl border border-orange-200 bg-orange-50 px-4 py-3 flex flex-col gap-1.5">
+          <p className="text-xs font-extrabold text-orange-600">📢 공지사항</p>
+          {bookingNotices.map(n => (
+            <p key={n.id} className="text-sm text-orange-900 whitespace-pre-wrap">{n.content}</p>
+          ))}
+        </div>
+      )}
 
       {tab === 'grid' ? (
         <>

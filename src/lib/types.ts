@@ -42,6 +42,7 @@ export interface UserIdentity {
 export interface Notice {
   id: string
   content: string
+  scope: 'main' | 'booking'
   is_active: boolean
   created_at: string
 }

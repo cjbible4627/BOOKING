@@ -1,19 +1,22 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import type { Notice } from '@/lib/types'
+import type { Notice, Resource } from '@/lib/types'
 import type { FormWithRound } from '@/lib/form-types'
 import { getNotices } from '@/lib/admin-storage'
 import { getOpenForms } from '@/lib/form-storage'
+import { getResources } from '@/lib/resource-storage'
 
 export default function Home() {
   const router = useRouter()
-  const [notices, setNotices] = useState<Notice[]>([])
-  const [forms, setForms]     = useState<FormWithRound[]>([])
+  const [notices, setNotices]     = useState<Notice[]>([])
+  const [forms, setForms]         = useState<FormWithRound[]>([])
+  const [resources, setResources] = useState<Resource[]>([])
 
   useEffect(() => {
-    getNotices().then(setNotices)
+    getNotices('main').then(setNotices)
     getOpenForms().then(setForms)
+    getResources().then(setResources)
   }, [])
 
   return (
@@ -94,6 +97,36 @@ export default function Home() {
           </div>
         )}
       </section>
+
+      {/* 자료실 */}
+      {resources.length > 0 && (
+        <section className="px-4 pb-8">
+          <p className="text-base font-extrabold text-black mb-3">자료실</p>
+          <div className="flex flex-col gap-2">
+            {resources.map(r => (
+              <a
+                key={r.id}
+                href={r.url ?? '#'}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-3 rounded-2xl border border-gray-200 px-4 py-3 active:bg-gray-50 transition-colors"
+              >
+                <span className="text-xl flex-shrink-0">{r.type === 'file' ? '📄' : '🔗'}</span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-gray-900 truncate">{r.title}</p>
+                  {r.type === 'file' && r.file_name && (
+                    <p className="text-[11px] text-gray-400 truncate">{r.file_name}</p>
+                  )}
+                  {r.type === 'link' && r.url && (
+                    <p className="text-[11px] text-blue-400 truncate">{r.url}</p>
+                  )}
+                </div>
+                <span className="text-gray-300 text-sm flex-shrink-0">›</span>
+              </a>
+            ))}
+          </div>
+        </section>
+      )}
 
       <footer className="py-4 text-center">
         <p className="text-[11px] text-gray-300 font-medium">Made by 김영섭 대건안드레아</p>

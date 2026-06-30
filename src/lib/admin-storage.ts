@@ -71,18 +71,16 @@ export function checkSlotBlocked(blocks: BlockedPeriod[], date: string, time: st
 }
 
 // ── 공지사항 관리 ────────────────────────────────────
-export async function getNotices(): Promise<Notice[]> {
-  const { data, error } = await supabase
-    .from('notices')
-    .select('*')
-    .eq('is_active', true)
-    .order('created_at', { ascending: false })
+export async function getNotices(scope?: 'main' | 'booking'): Promise<Notice[]> {
+  let q = supabase.from('notices').select('*').eq('is_active', true)
+  if (scope) q = q.eq('scope', scope)
+  const { data, error } = await q.order('created_at', { ascending: false })
   if (error) return []
   return data ?? []
 }
 
-export async function addNotice(content: string): Promise<void> {
-  await supabase.from('notices').insert({ content })
+export async function addNotice(content: string, scope: 'main' | 'booking' = 'main'): Promise<void> {
+  await supabase.from('notices').insert({ content, scope })
 }
 
 export async function updateNotice(id: string, content: string): Promise<void> {

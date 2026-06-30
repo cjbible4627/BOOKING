@@ -3,7 +3,9 @@ import { useState, useEffect } from 'react'
 import type { Notice } from '@/lib/types'
 import { getNotices, addNotice, updateNotice, removeNotice } from '@/lib/admin-storage'
 
-export default function NoticeManager() {
+interface Props { scope?: 'main' | 'booking' }
+
+export default function NoticeManager({ scope = 'main' }: Props) {
   const [notices, setNotices]       = useState<Notice[]>([])
   const [newContent, setNewContent] = useState('')
   const [editId, setEditId]         = useState<string | null>(null)
@@ -11,15 +13,15 @@ export default function NoticeManager() {
   const [submitting, setSubmitting] = useState(false)
 
   async function load() {
-    setNotices(await getNotices())
+    setNotices(await getNotices(scope))
   }
 
-  useEffect(() => { load() }, [])
+  useEffect(() => { load() }, [scope]) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleAdd() {
     if (!newContent.trim()) return
     setSubmitting(true)
-    await addNotice(newContent.trim())
+    await addNotice(newContent.trim(), scope)
     setNewContent('')
     await load()
     setSubmitting(false)
@@ -45,11 +47,14 @@ export default function NoticeManager() {
     setEditContent(n.content)
   }
 
+  const title = scope === 'booking' ? '예약 공지 관리' : '메인 공지사항 관리'
+  const desc  = scope === 'booking' ? '공간예약 페이지에 표시됩니다.' : '메인 화면에 표시됩니다.'
+
   return (
     <div className="px-4 py-4 max-w-2xl">
-      <p className="text-sm font-bold text-gray-800 mb-4">공지사항 관리</p>
+      <p className="text-sm font-bold text-gray-800 mb-1">{title}</p>
+      <p className="text-xs text-gray-400 mb-4">{desc}</p>
 
-      {/* 공지 목록 */}
       {notices.length === 0 ? (
         <div className="text-center text-gray-300 text-sm py-8 bg-gray-50 rounded-2xl mb-4">
           등록된 공지사항이 없습니다.
@@ -112,7 +117,6 @@ export default function NoticeManager() {
         </div>
       )}
 
-      {/* 새 공지 등록 */}
       <div className="border-t border-gray-100 pt-4">
         <p className="text-xs font-semibold text-gray-500 mb-2">새 공지 등록</p>
         <textarea
