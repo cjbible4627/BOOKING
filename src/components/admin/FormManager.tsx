@@ -7,9 +7,10 @@ import {
 import FormBuilder from './FormBuilder'
 import FormSubmissions from './FormSubmissions'
 import FormStats from './FormStats'
+import FormPreviewTab from './FormPreviewTab'
 import PrivacyConsentEditor from './PrivacyConsentEditor'
 
-type Sub = 'fields' | 'submissions' | 'stats'
+type Sub = 'fields' | 'submissions' | 'stats' | 'preview'
 
 export default function FormManager() {
   const [forms, setForms]       = useState<FormWithRound[]>([])
@@ -70,7 +71,7 @@ export default function FormManager() {
         </div>
 
         <div className="flex gap-1 px-4 border-b border-gray-100">
-          {([['fields', '질문 편집'], ['submissions', '제출 목록'], ['stats', '통계']] as const).map(([id, label]) => (
+          {([['fields', '질문 편집'], ['submissions', '제출 목록'], ['stats', '통계'], ['preview', '미리보기']] as const).map(([id, label]) => (
             <button
               key={id}
               onClick={() => setSub(id)}
@@ -86,6 +87,7 @@ export default function FormManager() {
         {sub === 'fields'      && <FormBuilder form={selected} />}
         {sub === 'submissions' && <FormSubmissions form={selected} />}
         {sub === 'stats'       && <FormStats form={selected} />}
+        {sub === 'preview'     && <FormPreviewTab form={selected} />}
       </div>
     )
   }

@@ -8,6 +8,7 @@ import FieldInput from './FieldInput'
 
 interface Props {
   form: FormWithFields
+  preview?: boolean
 }
 
 function isEmpty(type: string, v: AnswerValue): boolean {
@@ -17,7 +18,7 @@ function isEmpty(type: string, v: AnswerValue): boolean {
   return v === null || v === undefined || String(v).trim() === ''
 }
 
-export default function FormRenderer({ form }: Props) {
+export default function FormRenderer({ form, preview }: Props) {
   const [values, setValues]   = useState<Record<string, AnswerValue>>({})
   const [agreed, setAgreed]   = useState(false)
   const [privacy, setPrivacy] = useState<PrivacySettings | null>(null)
@@ -126,11 +127,11 @@ export default function FormRenderer({ form }: Props) {
           {error && <p className="text-red-500 text-sm font-semibold">{error}</p>}
 
           <button
-            onClick={handleSubmit}
-            disabled={loading}
+            onClick={preview ? undefined : handleSubmit}
+            disabled={loading || preview}
             className="w-full py-4 bg-blue-600 text-white rounded-2xl text-base font-bold disabled:opacity-50"
           >
-            {loading ? '제출 중...' : '제출하기'}
+            {preview ? '제출하기 (미리보기)' : loading ? '제출 중...' : '제출하기'}
           </button>
         </div>
       )}
