@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
+import * as XLSX from 'xlsx'
 import type { Booking, Room, GroupStage } from '@/lib/types'
 import { bookingsInRange } from '@/lib/storage'
 import { getRooms } from '@/lib/admin-storage'
@@ -101,6 +102,96 @@ export default function StatsView() {
   const maxHour = Math.max(1, ...byHour)
   const peakHour = byHour.indexOf(maxHour)
 
+  function makeSheet(data: (string | number)[][]): XLSX.WorkSheet {
+    const ws = XLSX.utils.aoa_to_sheet(data)
+    const ncols = data[0]?.length ?? 1
+    ws['!cols'] = Array.from({ length: ncols }, () => ({ wch: 18 }))
+    // 헤더 행 스타일
+    for (let c = 0; c < ncols; c++) {
+      const ref = XLSX.utils.encode_cell({ r: 0, c })
+      if (ws[ref]) ws[ref].s = {
+        font: { bold: true, color: { rgb: 'FFFFFF' } },
+        fill: { patternType: 'solid', fgColor: { rgb: '1B5FA3' } },
+        alignment: { horizontal: 'center' },
+      }
+    }
+    return ws
+  }
+
+  function downloadExcel() {
+    const wb = XLSX.utils.book_new()
+
+    // ① 요약
+    const summaryData: (string | number)[][] = [
+      ['항목', '값'],
+      ['기간', `${from} ~ ${to}`],
+      ['총 예약', total],
+      ['총 이용시간(h)', totalHours],
+      ['평균 인원', avgMembers],
+    ]
+    XLSX.utils.book_append_sheet(wb, makeSheet(summaryData), '요약')
+
+    // ② 방별 예약
+    const roomData: (string | number)[][] = [
+      ['방', '예약 수'],
+      ...byRoom.map(r => [r.name, r.count]),
+    ]
+    XLSX.utils.book_append_sheet(wb, makeSheet(roomData), '방별 예약')
+
+    // ③ 그룹과정별
+    const stageData: (string | number)[][] = [
+      ['그룹과정', '예약 수'],
+      ...byStage.map(s => [s.stage, s.count]),
+    ]
+    XLSX.utils.book_append_sheet(wb, makeSheet(stageData), '그룹과정별')
+
+    // ④ 요일별
+    const dowData: (string | number)[][] = [
+      ['요일', '예약 수'],
+      ...DOW.map((d, i) => [d, byDow[i]]),
+    ]
+    XLSX.utils.book_append_sheet(wb, makeSheet(dowData), '요일별')
+
+    // ⑤ 시간대별
+    const hourData: (string | number)[][] = [
+      ['시간대', '예약 수'],
+      ...slots.map((h, i) => [`${String(h).padStart(2, '0')}:00`, byHour[i]]),
+    ]
+    XLSX.utils.book_append_sheet(wb, makeSheet(hourData), '시간대별')
+
+    // ⑥ 예약 목록 (원본)
+    const listHeaders = ['날짜', '방', '시작', '종료', '이용시간(h)', '그룹과정', '인원', '담당자', '세례명']
+    const listRows = bookings.map(b => [
+      b.date,
+      roomName(b.room_id),
+      b.start_time,
+      b.end_time,
+      hours(b),
+      b.group_stage,
+      b.member_count,
+      b.leader_name,
+      b.baptismal_name,
+    ])
+    const listWs = makeSheet([listHeaders, ...listRows])
+    listWs['!cols'] = listHeaders.map(h => ({ wch: Math.max(10, h.length + 4) }))
+    // 데이터 행 얼룩무늬
+    for (let r = 1; r <= listRows.length; r++) {
+      const zebra = r % 2 === 0 ? 'F5F7FA' : 'FFFFFF'
+      listHeaders.forEach((_, ci) => {
+        const ref = XLSX.utils.encode_cell({ r, c: ci })
+        if (listWs[ref]) listWs[ref].s = {
+          fill: { patternType: 'solid', fgColor: { rgb: zebra } },
+          alignment: { vertical: 'center' },
+          border: { bottom: { style: 'thin', color: { rgb: 'E0E0E0' } } },
+        }
+      })
+    }
+    listWs['!views'] = [{ state: 'frozen', xSplit: 0, ySplit: 1 }]
+    XLSX.utils.book_append_sheet(wb, listWs, '예약 목록')
+
+    XLSX.writeFile(wb, `예약통계_${from}_${to}.xlsx`)
+  }
+
   return (
     <div className="px-4 py-4 max-w-2xl">
       <p className="text-xs text-gray-500 mb-4">기간별 예약 통계를 확인할 수 있습니다.</p>
@@ -149,13 +240,23 @@ export default function StatsView() {
         </label>
       </div>
 
-      <button
-        onClick={fetchData}
-        disabled={loading || !from || !to || from > to}
-        className="w-full py-2.5 bg-gray-800 text-white rounded-xl text-sm font-medium mb-5 disabled:opacity-40 hover:bg-gray-700"
-      >
-        {loading ? '조회 중...' : '조회'}
-      </button>
+      <div className="flex gap-2 mb-5">
+        <button
+          onClick={fetchData}
+          disabled={loading || !from || !to || from > to}
+          className="flex-1 py-2.5 bg-gray-800 text-white rounded-xl text-sm font-medium disabled:opacity-40 hover:bg-gray-700"
+        >
+          {loading ? '조회 중...' : '조회'}
+        </button>
+        {fetched && total > 0 && (
+          <button
+            onClick={downloadExcel}
+            className="px-4 py-2.5 bg-green-600 text-white rounded-xl text-sm font-bold whitespace-nowrap active:scale-95 transition-transform"
+          >
+            ⬇ 엑셀
+          </button>
+        )}
+      </div>
 
       {fetched && (
         total === 0 ? (
