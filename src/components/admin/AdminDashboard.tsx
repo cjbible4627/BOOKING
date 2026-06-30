@@ -8,8 +8,10 @@ import BlockManager from './BlockManager'
 import ExportView from './ExportView'
 import NoticeManager from './NoticeManager'
 import ResourceManager from './ResourceManager'
+import StatsView from './StatsView'
+import FormManager from './FormManager'
 
-type Tab = 'bookings' | 'rooms' | 'blocks' | 'export' | 'notices' | 'resources'
+type Tab = 'bookings' | 'stats' | 'forms' | 'rooms' | 'blocks' | 'export' | 'notices' | 'resources'
 
 export default function AdminDashboard() {
   const router = useRouter()
@@ -46,6 +48,8 @@ export default function AdminDashboard() {
       <div className="flex bg-white border-b border-gray-100 px-4 gap-1 overflow-x-auto scrollbar-none">
         {([
           ['bookings',  '예약 현황'],
+          ['stats',     '📊 통계'],
+          ['forms',     '📝 신청서'],
           ['rooms',     '방 관리'],
           ['blocks',    '차단 관리'],
           ['notices',   '공지사항'],
@@ -68,6 +72,8 @@ export default function AdminDashboard() {
 
       <div className="flex-1 overflow-y-auto">
         {tab === 'bookings'  && <AdminBookings />}
+        {tab === 'stats'     && <StatsView />}
+        {tab === 'forms'     && <FormManager />}
         {tab === 'rooms'     && <RoomManager />}
         {tab === 'blocks'    && <BlockManager />}
         {tab === 'notices'   && <NoticeManager />}

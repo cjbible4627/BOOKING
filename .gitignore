@@ -49,4 +49,7 @@ next-env.d.ts
 # generated conversation exports / handover docs (shared via NAS, not git)
 docs/
 
+# 인수인계서 등 루트 문서 (관리자 비밀번호 등 민감정보 포함 — git 제외)
+/*.docx
+
 .vercel

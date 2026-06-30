@@ -4,6 +4,7 @@ import type { Booking, Room } from '@/lib/types'
 import { loadBookings, cancelBooking } from '@/lib/storage'
 import { getRooms } from '@/lib/admin-storage'
 import { GROUP_COLORS } from '@/lib/constants'
+import AdminBookingModal from './AdminBookingModal'
 
 const DOW = ['일', '월', '화', '수', '목', '금', '토']
 
@@ -24,10 +25,12 @@ export default function AdminBookings() {
   const [bookings, setBookings] = useState<Booking[]>([])
   const [rooms, setRooms]       = useState<Room[]>([])
   const [confirmId, setConfirmId] = useState<string | null>(null)
+  const [modalOpen, setModalOpen] = useState(false)
+  const [editTarget, setEditTarget] = useState<Booking | null>(null)
 
   useEffect(() => { getRooms().then(setRooms) }, [])
 
-  useEffect(() => {
+  function reload() {
     loadBookings().then(all => {
       setBookings(
         all
@@ -35,7 +38,25 @@ export default function AdminBookings() {
           .sort((a, b) => `${a.room_id}${a.start_time}`.localeCompare(`${b.room_id}${b.start_time}`))
       )
     })
-  }, [date])
+  }
+
+  useEffect(reload, [date])
+
+  function openCreate() {
+    setEditTarget(null)
+    setModalOpen(true)
+  }
+
+  function openEdit(b: Booking) {
+    setEditTarget(b)
+    setModalOpen(true)
+  }
+
+  function handleSaved() {
+    setModalOpen(false)
+    setEditTarget(null)
+    reload()
+  }
 
   function roomName(id: string) {
     return rooms.find(r => r.id === id)?.name ?? id
@@ -82,7 +103,7 @@ export default function AdminBookings() {
         )}
       </div>
 
-      {/* 예약 수 배지 */}
+      {/* 예약 수 배지 + 추가 버튼 */}
       <div className="px-4 pt-3 pb-1 flex items-center gap-2">
         <span className="text-xs font-extrabold text-black">예약 현황</span>
         <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
@@ -90,6 +111,12 @@ export default function AdminBookings() {
         }`}>
           {bookings.length}건
         </span>
+        <button
+          onClick={openCreate}
+          className="ml-auto text-xs font-bold text-white bg-blue-600 rounded-lg px-3 py-1.5 active:scale-95 transition-transform"
+        >
+          + 예약 추가
+        </button>
       </div>
 
       {/* 예약 목록 */}
@@ -139,14 +166,22 @@ export default function AdminBookings() {
                   </div>
                 </div>
 
-                {/* 강제 취소 버튼 */}
+                {/* 수정 / 강제 취소 버튼 */}
                 {confirmId !== b.id ? (
-                  <button
-                    onClick={() => setConfirmId(b.id)}
-                    className="w-full py-2.5 text-xs text-red-500 font-bold border-t-2 border-gray-200 bg-white active:bg-red-50"
-                  >
-                    강제 취소
-                  </button>
+                  <div className="flex border-t-2 border-gray-200">
+                    <button
+                      onClick={() => openEdit(b)}
+                      className="flex-1 py-2.5 text-xs text-blue-600 font-bold bg-white active:bg-blue-50"
+                    >
+                      수정
+                    </button>
+                    <button
+                      onClick={() => setConfirmId(b.id)}
+                      className="flex-1 py-2.5 text-xs text-red-500 font-bold border-l-2 border-gray-200 bg-white active:bg-red-50"
+                    >
+                      강제 취소
+                    </button>
+                  </div>
                 ) : (
                   <div className="flex border-t-2 border-gray-200 bg-red-50">
                     <button
@@ -168,6 +203,16 @@ export default function AdminBookings() {
           })
         )}
       </div>
+
+      {modalOpen && (
+        <AdminBookingModal
+          editTarget={editTarget}
+          rooms={rooms}
+          defaultDate={date}
+          onClose={() => { setModalOpen(false); setEditTarget(null) }}
+          onSaved={handleSaved}
+        />
+      )}
     </div>
   )
 }

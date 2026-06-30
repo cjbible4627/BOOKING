@@ -11,6 +11,7 @@ import BookingModal from '@/components/BookingModal'
 import MyBookingsView from '@/components/MyBookingsView'
 import AllBookingsView from '@/components/AllBookingsView'
 import ResourceView from '@/components/ResourceView'
+import IdentityGate from '@/components/IdentityGate'
 
 const IDENTITY_KEY = 'ybm_identity'
 type Tab = 'grid' | 'mine' | 'all' | 'resources'
@@ -31,11 +32,8 @@ export default function BookingPage() {
   useEffect(() => {
     try {
       const saved = JSON.parse(localStorage.getItem(IDENTITY_KEY) ?? 'null')
-      if (!saved?.name) { router.replace('/'); return }
-      setIdentity(saved)
-    } catch {
-      router.replace('/')
-    }
+      if (saved?.name) setIdentity(saved)
+    } catch {}
     getRooms().then(setRooms)
     getBlocked().then(setBlocked)
   }, [])
@@ -55,7 +53,7 @@ export default function BookingPage() {
   function closeModal() { setSlot(null); setEditTarget(null) }
   function onSaved()    { closeModal(); refresh() }
 
-  if (!identity) return null
+  if (!identity) return <IdentityGate onComplete={setIdentity} />
 
   return (
     <div className="flex flex-col h-svh bg-white">

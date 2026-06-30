@@ -11,6 +11,8 @@ export default function AdminLoginPage() {
   function handleLogin() {
     if (checkPassword(pw)) {
       loginAdmin()
+      // 서버 API(신청서 제출 조회) 인증용 토큰 저장
+      sessionStorage.setItem('ybm_admin_token', pw)
       router.push('/admin/dashboard')
     } else {
       setError('비밀번호가 올바르지 않습니다.')
