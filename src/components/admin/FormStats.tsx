@@ -1,9 +1,9 @@
 'use client'
 import { useState, useEffect } from 'react'
 import * as XLSX from 'xlsx'
-import type { FormDef, FormField, FormSubmission } from '@/lib/form-types'
+import type { FormDef, FormField, FormRound, FormSubmission } from '@/lib/form-types'
 import { CHOICE_TYPES } from '@/lib/form-types'
-import { getFields } from '@/lib/form-storage'
+import { getFields, getRounds } from '@/lib/form-storage'
 import { fetchSubmissions } from '@/lib/form-client'
 
 interface Props { form: FormDef }
@@ -16,21 +16,35 @@ interface Dist { label: string; type: string; rows: { option: string; count: num
 
 export default function FormStats({ form }: Props) {
   const [fields, setFields] = useState<FormField[]>([])
-  const [subs, setSubs]     = useState<FormSubmission[]>([])
+  const [rounds, setRounds] = useState<FormRound[]>([])
+  const [allSubs, setAllSubs] = useState<FormSubmission[]>([])
+  const [roundFilter, setRoundFilter] = useState<string>('all') // 'all' | roundId | 'none'
   const [loading, setLoading] = useState(true)
   const [error, setError]   = useState('')
 
   async function load() {
     setLoading(true); setError('')
     try {
-      const [fs, ss] = await Promise.all([getFields(form.id), fetchSubmissions(form.id)])
-      setFields(fs); setSubs(ss)
+      const [fs, rs, ss] = await Promise.all([getFields(form.id), getRounds(form.id), fetchSubmissions(form.id)])
+      setFields(fs); setRounds(rs); setAllSubs(ss)
     } catch (e) {
       setError(e instanceof Error ? e.message : '조회에 실패했습니다.')
     }
     setLoading(false)
   }
   useEffect(() => { load() }, [form.id]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  function roundName(id: string | null): string {
+    if (!id) return '미지정'
+    return rounds.find(r => r.id === id)?.name ?? '(삭제된 회차)'
+  }
+
+  const useRounds = form.open_mode === 'period'
+  const subs = allSubs.filter(s =>
+    roundFilter === 'all' ? true
+    : roundFilter === 'none' ? !s.round_id
+    : s.round_id === roundFilter,
+  )
 
   const total = subs.length
 
@@ -62,7 +76,6 @@ export default function FormStats({ form }: Props) {
   function downloadExcel() {
     const wb = XLSX.utils.book_new()
 
-    // 시트1: 질문별 분포
     const distRows: (string | number)[][] = [['질문', '옵션', '응답수', '비율(%)']]
     for (const d of dists) {
       const sum = d.rows.reduce((s, r) => s + r.count, 0)
@@ -70,18 +83,18 @@ export default function FormStats({ form }: Props) {
         distRows.push([i === 0 ? d.label : '', r.option, r.count, sum ? Math.round((r.count / sum) * 1000) / 10 : 0])
       })
     }
-    const ws1 = XLSX.utils.aoa_to_sheet(distRows.length > 1 ? distRows : [['질문', '옵션', '응답수', '비율(%)']])
+    const ws1 = XLSX.utils.aoa_to_sheet(distRows)
     ws1['!cols'] = [{ wch: 20 }, { wch: 18 }, { wch: 8 }, { wch: 8 }]
     XLSX.utils.book_append_sheet(wb, ws1, '질문별분포')
 
-    // 시트2: 일별 추이
     const dailyRows: (string | number)[][] = [['날짜', '신청수'], ...daily.map(([d, c]) => [d, c])]
     const ws2 = XLSX.utils.aoa_to_sheet(dailyRows)
     ws2['!cols'] = [{ wch: 14 }, { wch: 8 }]
     XLSX.utils.book_append_sheet(wb, ws2, '일별추이')
 
+    const suffix = roundFilter === 'all' ? '' : roundFilter === 'none' ? '_미지정' : `_${roundName(roundFilter)}`
     const today = new Date().toLocaleDateString('sv-SE')
-    XLSX.writeFile(wb, `${form.title}_신청통계_${today}.xlsx`)
+    XLSX.writeFile(wb, `${form.title}_신청통계${suffix}_${today}.xlsx`)
   }
 
   if (loading) return <div className="py-12 text-center text-sm text-gray-400">불러오는 중...</div>
@@ -89,6 +102,22 @@ export default function FormStats({ form }: Props) {
 
   return (
     <div className="px-4 py-4 max-w-2xl">
+      {/* 회차 필터 */}
+      {useRounds && rounds.length > 0 && (
+        <div className="flex items-center gap-2 mb-3">
+          <span className="text-xs font-semibold text-gray-500">회차</span>
+          <select
+            value={roundFilter}
+            onChange={e => setRoundFilter(e.target.value)}
+            className="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:border-blue-400"
+          >
+            <option value="all">전체</option>
+            {rounds.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
+            <option value="none">미지정</option>
+          </select>
+        </div>
+      )}
+
       <div className="flex items-center justify-between mb-4">
         <p className="text-sm text-gray-600">총 신청 <span className="font-bold text-gray-900">{total}건</span></p>
         {total > 0 && (

@@ -36,7 +36,7 @@ export interface FormField {
   created_at: string
 }
 
-export type OpenMode = 'always' | 'period'
+export type OpenMode = 'always' | 'period'  // 'always' 상시 | 'period' 회차 모집
 
 export interface FormDef {
   id: string
@@ -44,11 +44,23 @@ export interface FormDef {
   title: string
   description: string | null
   is_open: boolean          // 수동 게시 토글 (마스터 스위치)
-  open_mode: OpenMode       // 'always' 상시 | 'period' 기간 모집
+  open_mode: OpenMode       // 'always' 상시 | 'period' 회차제
+  open_start: string | null // (legacy) 회차제 이전 단일 기간 — 현재 미사용
+  open_end: string | null   // (legacy)
+  current_round_id: string | null // 회차제일 때 현재 진행 회차
+  sort_order: number
+  is_active: boolean
+  created_at: string
+}
+
+// 신청서 회차 (재사용: 학기/기수별 모집 단위)
+export interface FormRound {
+  id: string
+  form_id: string
+  name: string              // 예: "2026-1학기"
   open_start: string | null // 'YYYY-MM-DD'
   open_end: string | null   // 'YYYY-MM-DD'
   sort_order: number
-  is_active: boolean
   created_at: string
 }
 
@@ -59,28 +71,43 @@ export function todayKST(): string {
   }).format(new Date())
 }
 
-// 현재 시점에 공개·접수 가능한 폼인지 (게시 ON + 상시이거나 기간 내)
-export function isFormOpenNow(form: Pick<FormDef, 'is_open' | 'open_mode' | 'open_start' | 'open_end'>, today: string = todayKST()): boolean {
+type RoundPeriod = Pick<FormRound, 'open_start' | 'open_end'> | null
+
+// 현재 시점에 공개·접수 가능한 폼인지
+// 상시: 게시 ON이면 항상 / 회차제: 게시 ON + 현재 회차의 기간 내
+export function isFormOpenNow(
+  form: Pick<FormDef, 'is_open' | 'open_mode'>,
+  currentRound: RoundPeriod = null,
+  today: string = todayKST(),
+): boolean {
   if (!form.is_open) return false
   if (form.open_mode === 'always') return true
-  if (form.open_start && today < form.open_start) return false
-  if (form.open_end && today > form.open_end) return false
+  if (!currentRound) return false
+  if (currentRound.open_start && today < currentRound.open_start) return false
+  if (currentRound.open_end && today > currentRound.open_end) return false
   return true
 }
 
-// 기간 모집 폼의 현재 상태 라벨
+// 회차제 폼의 현재 회차 상태 라벨
 export function periodStatus(
-  form: Pick<FormDef, 'open_mode' | 'open_start' | 'open_end'>,
+  form: Pick<FormDef, 'open_mode'>,
+  currentRound: RoundPeriod = null,
   today: string = todayKST(),
-): 'before' | 'during' | 'after' | 'always' {
+): 'before' | 'during' | 'after' | 'always' | 'none' {
   if (form.open_mode === 'always') return 'always'
-  if (form.open_start && today < form.open_start) return 'before'
-  if (form.open_end && today > form.open_end) return 'after'
+  if (!currentRound) return 'none'
+  if (currentRound.open_start && today < currentRound.open_start) return 'before'
+  if (currentRound.open_end && today > currentRound.open_end) return 'after'
   return 'during'
 }
 
-// 폼 + 질문 묶음 (공개 작성 화면용)
-export interface FormWithFields extends FormDef {
+// 폼 + 현재 회차 (목록/홈용)
+export interface FormWithRound extends FormDef {
+  current_round: FormRound | null
+}
+
+// 폼 + 질문 + 현재 회차 묶음 (공개 작성 화면용)
+export interface FormWithFields extends FormWithRound {
   fields: FormField[]
 }
 
@@ -101,6 +128,7 @@ export interface SubmissionAnswers {
 export interface FormSubmission {
   id: string
   form_id: string
+  round_id: string | null
   answers: SubmissionAnswers
   created_at: string
 }

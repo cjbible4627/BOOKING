@@ -2,14 +2,14 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import type { Notice } from '@/lib/types'
-import type { FormDef } from '@/lib/form-types'
+import type { FormWithRound } from '@/lib/form-types'
 import { getNotices } from '@/lib/admin-storage'
 import { getOpenForms } from '@/lib/form-storage'
 
 export default function Home() {
   const router = useRouter()
   const [notices, setNotices] = useState<Notice[]>([])
-  const [forms, setForms]     = useState<FormDef[]>([])
+  const [forms, setForms]     = useState<FormWithRound[]>([])
 
   useEffect(() => {
     getNotices().then(setNotices)
@@ -85,7 +85,9 @@ export default function Home() {
                 <span className="text-2xl">📝</span>
                 <p className="text-sm font-bold text-gray-900 leading-snug">{f.title}</p>
                 <span className="text-[11px] font-bold text-green-600">
-                  {f.open_mode === 'period' && f.open_end ? `~${f.open_end.slice(5).replace('-', '/')}까지 ›` : '모집중 ›'}
+                  {f.open_mode === 'period' && f.current_round?.open_end
+                    ? `~${f.current_round.open_end.slice(5).replace('-', '/')}까지 ›`
+                    : '모집중 ›'}
                 </span>
               </button>
             ))}

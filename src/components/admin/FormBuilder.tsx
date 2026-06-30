@@ -1,9 +1,10 @@
 'use client'
 import { useState, useEffect } from 'react'
-import type { FormDef, FormField, FieldType, OpenMode } from '@/lib/form-types'
+import type { FormDef, FormField, FormRound, FieldType, OpenMode } from '@/lib/form-types'
 import { FIELD_TYPES, FIELD_TYPE_LABELS, CHOICE_TYPES } from '@/lib/form-types'
 import {
   getFields, addField, updateField, deleteField, reorderFields, updateForm,
+  getRounds, addRound, updateRound, deleteRound, setCurrentRound,
 } from '@/lib/form-storage'
 
 interface Props { form: FormDef }
@@ -12,12 +13,17 @@ export default function FormBuilder({ form }: Props) {
   const [fields, setFields] = useState<FormField[]>([])
   const [desc, setDesc]     = useState(form.description ?? '')
   const [openMode, setOpenMode]   = useState<OpenMode>(form.open_mode)
-  const [openStart, setOpenStart] = useState(form.open_start ?? '')
-  const [openEnd, setOpenEnd]     = useState(form.open_end ?? '')
+  const [rounds, setRounds]       = useState<FormRound[]>([])
+  const [currentRoundId, setCurrentRoundId] = useState<string | null>(form.current_round_id)
+  const [newRoundName, setNewRoundName]     = useState('')
+  const [newRoundStart, setNewRoundStart]   = useState('')
+  const [newRoundEnd, setNewRoundEnd]       = useState('')
   const [loading, setLoading] = useState(true)
 
   async function load() {
-    setFields(await getFields(form.id))
+    const [fs, rs] = await Promise.all([getFields(form.id), getRounds(form.id)])
+    setFields(fs)
+    setRounds(rs)
     setLoading(false)
   }
   useEffect(() => { load() }, [form.id]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -76,13 +82,36 @@ export default function FormBuilder({ form }: Props) {
     updateForm(form.id, { open_mode: mode })
   }
 
+  // ── 회차 핸들러 ──
+  async function handleAddRound() {
+    if (!newRoundName.trim()) return
+    const r = await addRound(form.id, newRoundName, newRoundStart || null, newRoundEnd || null)
+    const next = [...rounds, r]
+    setRounds(next)
+    setNewRoundName(''); setNewRoundStart(''); setNewRoundEnd('')
+    // 첫 회차면 자동으로 현재 회차 지정
+    if (!currentRoundId) { setCurrentRoundId(r.id); await setCurrentRound(form.id, r.id) }
+  }
+  async function makeCurrent(id: string) {
+    setCurrentRoundId(id)
+    await setCurrentRound(form.id, id)
+  }
+  function patchRoundLocal(id: string, patch: Partial<FormRound>) {
+    setRounds(prev => prev.map(r => r.id === id ? { ...r, ...patch } : r))
+  }
+  async function handleDeleteRound(id: string) {
+    await deleteRound(id)
+    setRounds(prev => prev.filter(r => r.id !== id))
+    if (currentRoundId === id) { setCurrentRoundId(null); await setCurrentRound(form.id, null) }
+  }
+
   return (
     <div className="px-4 py-4 max-w-2xl">
       {/* 모집 설정 */}
       <div className="rounded-2xl border-2 border-gray-200 p-4 mb-5">
         <span className="text-xs font-semibold text-gray-500 mb-2 block">모집 방식</span>
         <div className="flex gap-2 mb-1">
-          {([['always', '상시 모집'], ['period', '기간 모집']] as const).map(([m, label]) => (
+          {([['always', '상시 모집'], ['period', '회차 모집']] as const).map(([m, label]) => (
             <button
               key={m}
               onClick={() => changeMode(m)}
@@ -95,34 +124,84 @@ export default function FormBuilder({ form }: Props) {
           ))}
         </div>
 
-        {openMode === 'period' && (
-          <div className="flex gap-2 mt-3">
-            <label className="flex-1">
-              <span className="text-xs text-gray-400 mb-1 block">시작일</span>
+        {openMode === 'always' ? (
+          <p className="text-[11px] text-gray-400 mt-2">
+            게시 토글이 켜져 있는 동안 항상 노출됩니다. 모집을 켜고 끄는 것은 목록의 “모집중/중지” 버튼에서.
+          </p>
+        ) : (
+          <div className="mt-3">
+            <span className="text-xs font-semibold text-gray-500 mb-2 block">회차 관리</span>
+
+            {/* 회차 목록 */}
+            {rounds.length === 0 ? (
+              <p className="text-[11px] text-gray-400 mb-3">아직 회차가 없습니다. 아래에서 첫 회차를 추가하세요.</p>
+            ) : (
+              <div className="flex flex-col gap-2 mb-3">
+                {rounds.map(r => {
+                  const isCurrent = r.id === currentRoundId
+                  return (
+                    <div key={r.id} className={`rounded-xl border-2 p-2.5 ${isCurrent ? 'border-blue-400 bg-blue-50' : 'border-gray-200'}`}>
+                      <div className="flex items-center gap-2 mb-1.5">
+                        <input
+                          type="text"
+                          value={r.name}
+                          onChange={e => patchRoundLocal(r.id, { name: e.target.value })}
+                          onBlur={e => updateRound(r.id, { name: e.target.value })}
+                          className="flex-1 min-w-0 border-b border-gray-200 px-1 py-0.5 text-sm font-bold focus:outline-none focus:border-blue-500 bg-transparent"
+                        />
+                        {isCurrent
+                          ? <span className="text-[10px] font-bold text-white bg-blue-600 px-2 py-0.5 rounded-full flex-shrink-0">현재 회차</span>
+                          : <button onClick={() => makeCurrent(r.id)} className="text-[10px] font-bold text-blue-600 border border-blue-200 px-2 py-0.5 rounded-full flex-shrink-0">현재로 지정</button>}
+                        <button onClick={() => handleDeleteRound(r.id)} className="text-[10px] font-bold text-red-400 flex-shrink-0">삭제</button>
+                      </div>
+                      <div className="flex gap-2">
+                        <input
+                          type="date"
+                          value={r.open_start ?? ''}
+                          onChange={e => { patchRoundLocal(r.id, { open_start: e.target.value || null }); updateRound(r.id, { open_start: e.target.value || null }) }}
+                          className="flex-1 border border-gray-200 rounded-lg px-2 py-1 text-xs focus:outline-none focus:border-blue-400"
+                        />
+                        <span className="text-gray-400 text-xs self-center">~</span>
+                        <input
+                          type="date"
+                          value={r.open_end ?? ''}
+                          onChange={e => { patchRoundLocal(r.id, { open_end: e.target.value || null }); updateRound(r.id, { open_end: e.target.value || null }) }}
+                          className="flex-1 border border-gray-200 rounded-lg px-2 py-1 text-xs focus:outline-none focus:border-blue-400"
+                        />
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+
+            {/* 새 회차 추가 */}
+            <div className="rounded-xl border-2 border-dashed border-gray-300 p-2.5">
               <input
-                type="date"
-                value={openStart}
-                onChange={e => { setOpenStart(e.target.value); updateForm(form.id, { open_start: e.target.value || null }) }}
-                className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-400"
+                type="text"
+                value={newRoundName}
+                onChange={e => setNewRoundName(e.target.value)}
+                placeholder="새 회차 이름 (예: 2026-1학기)"
+                className="w-full border-b border-gray-200 px-1 py-1 text-sm focus:outline-none focus:border-blue-500 mb-2"
               />
-            </label>
-            <label className="flex-1">
-              <span className="text-xs text-gray-400 mb-1 block">종료일</span>
-              <input
-                type="date"
-                value={openEnd}
-                onChange={e => { setOpenEnd(e.target.value); updateForm(form.id, { open_end: e.target.value || null }) }}
-                className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-400"
-              />
-            </label>
+              <div className="flex gap-2 mb-2">
+                <input type="date" value={newRoundStart} onChange={e => setNewRoundStart(e.target.value)}
+                  className="flex-1 border border-gray-200 rounded-lg px-2 py-1 text-xs focus:outline-none focus:border-blue-400" />
+                <span className="text-gray-400 text-xs self-center">~</span>
+                <input type="date" value={newRoundEnd} onChange={e => setNewRoundEnd(e.target.value)}
+                  className="flex-1 border border-gray-200 rounded-lg px-2 py-1 text-xs focus:outline-none focus:border-blue-400" />
+              </div>
+              <button onClick={handleAddRound} disabled={!newRoundName.trim()}
+                className="w-full py-2 bg-blue-600 text-white rounded-lg text-xs font-bold disabled:opacity-40">
+                + 회차 추가
+              </button>
+            </div>
+
+            <p className="text-[11px] text-gray-400 mt-2">
+              <b>현재 회차</b>의 기간에만 홈에 노출·접수되고, 새 제출은 현재 회차로 기록됩니다. 새 학기엔 회차를 추가하고 “현재로 지정”하세요. (게시 ON 필요)
+            </p>
           </div>
         )}
-        <p className="text-[11px] text-gray-400 mt-2">
-          {openMode === 'period'
-            ? '설정한 기간에만 홈 화면에 노출되고, 기간이 지나면 자동으로 마감됩니다.'
-            : '게시 토글이 켜져 있는 동안 항상 노출됩니다.'}
-          {' '}모집을 켜고 끄는 것은 목록의 “모집중/중지” 버튼에서.
-        </p>
       </div>
 
       {/* 안내문구 */}

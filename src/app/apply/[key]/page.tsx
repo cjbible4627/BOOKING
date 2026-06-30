@@ -38,13 +38,13 @@ export default function ApplyPage({ params }: { params: Promise<{ key: string }>
           <span className="text-4xl">🔍</span>
           <p className="text-sm font-semibold text-gray-500">존재하지 않는 신청서입니다.</p>
         </div>
-      ) : !isFormOpenNow(form) ? (
+      ) : !isFormOpenNow(form, form.current_round) ? (
         <div className="flex flex-col items-center justify-center py-24 px-6 text-center gap-2">
-          <span className="text-4xl">{periodStatus(form) === 'before' ? '⏳' : '🔒'}</span>
+          <span className="text-4xl">{periodStatus(form, form.current_round) === 'before' ? '⏳' : '🔒'}</span>
           <p className="text-base font-bold text-gray-800">{form.title}</p>
-          {periodStatus(form) === 'before' ? (
-            <p className="text-sm text-gray-500">아직 모집 시작 전입니다.{form.open_start ? ` (${form.open_start} 시작)` : ''}</p>
-          ) : periodStatus(form) === 'after' ? (
+          {periodStatus(form, form.current_round) === 'before' ? (
+            <p className="text-sm text-gray-500">아직 모집 시작 전입니다.{form.current_round?.open_start ? ` (${form.current_round.open_start} 시작)` : ''}</p>
+          ) : periodStatus(form, form.current_round) === 'after' ? (
             <p className="text-sm text-gray-500">모집이 마감되었습니다.</p>
           ) : (
             <p className="text-sm text-gray-500">현재 모집 중이 아닙니다.</p>

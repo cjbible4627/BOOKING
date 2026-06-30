@@ -26,16 +26,19 @@ export async function POST(request: Request) {
 
   const supabaseAdmin = getSupabaseAdmin()
 
-  // 폼 존재 + 모집중(게시 + 기간) 확인
+  // 폼 존재 + 모집중(게시 + 현재 회차 기간) 확인
   const { data: form, error: formErr } = await supabaseAdmin
     .from('forms')
-    .select('id, is_open, is_active, open_mode, open_start, open_end')
+    .select('id, is_open, is_active, open_mode, current_round_id, current_round:current_round_id(open_start, open_end)')
     .eq('id', formId)
     .maybeSingle()
   if (formErr || !form || !form.is_active) {
     return Response.json({ ok: false, error: '존재하지 않는 신청서입니다.' }, { status: 404 })
   }
-  if (!isFormOpenNow(form)) {
+  type RoundShape = { open_start: string | null; open_end: string | null }
+  const f = form as unknown as { current_round_id: string | null; current_round: RoundShape | RoundShape[] | null }
+  const currentRound = Array.isArray(f.current_round) ? (f.current_round[0] ?? null) : f.current_round
+  if (!isFormOpenNow(form, currentRound)) {
     return Response.json({ ok: false, error: '현재 모집 기간이 아닙니다.' }, { status: 403 })
   }
 
@@ -57,7 +60,7 @@ export async function POST(request: Request) {
 
   const { error: insErr } = await supabaseAdmin
     .from('form_submissions')
-    .insert({ form_id: formId, answers: { fields: entries } })
+    .insert({ form_id: formId, round_id: f.current_round_id, answers: { fields: entries } })
   if (insErr) {
     return Response.json({ ok: false, error: '제출에 실패했습니다.' }, { status: 500 })
   }

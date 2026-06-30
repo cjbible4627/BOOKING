@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
-import type { FormDef } from '@/lib/form-types'
+import type { FormWithRound } from '@/lib/form-types'
 import {
   getAllForms, createForm, toggleFormOpen, deleteForm, reorderForms,
 } from '@/lib/form-storage'
@@ -11,8 +11,8 @@ import FormStats from './FormStats'
 type Sub = 'fields' | 'submissions' | 'stats'
 
 export default function FormManager() {
-  const [forms, setForms]       = useState<FormDef[]>([])
-  const [selected, setSelected] = useState<FormDef | null>(null)
+  const [forms, setForms]       = useState<FormWithRound[]>([])
+  const [selected, setSelected] = useState<FormWithRound | null>(null)
   const [sub, setSub]           = useState<Sub>('fields')
   const [newTitle, setNewTitle] = useState('')
   const [creating, setCreating] = useState(false)
@@ -33,7 +33,7 @@ export default function FormManager() {
     setCreating(false)
   }
 
-  async function handleToggle(f: FormDef) {
+  async function handleToggle(f: FormWithRound) {
     await toggleFormOpen(f.id, !f.is_open)
     setForms(prev => prev.map(x => x.id === f.id ? { ...x, is_open: !x.is_open } : x))
   }
@@ -134,7 +134,9 @@ export default function FormManager() {
                   <p className="font-bold text-gray-900 text-sm truncate">{f.title}</p>
                   <p className="text-[11px] text-gray-400 truncate">
                     {f.open_mode === 'period'
-                      ? `기간 ${f.open_start ?? '?'} ~ ${f.open_end ?? '?'}`
+                      ? (f.current_round
+                          ? `현재 회차: ${f.current_round.name}`
+                          : '회차 모집 (회차 미지정)')
                       : '상시 모집'}
                   </p>
                 </div>
