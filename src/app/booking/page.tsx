@@ -70,24 +70,24 @@ export default function BookingPage() {
             ←
           </button>
           <div className="min-w-0">
-            <div className="flex items-center gap-1.5">
-              <span className="text-sm font-bold text-gray-900 truncate">
-                {identity.name} ({identity.baptismal})
-              </span>
-              <button
-                onClick={() => {
-                  localStorage.removeItem(IDENTITY_KEY)
-                  setIdentity(null)
-                }}
-                className="text-[10px] text-gray-400 hover:text-gray-600 border border-gray-200 rounded px-1.5 py-0.5 flex-shrink-0"
-              >
-                변경
-              </button>
-            </div>
+            <span className="text-sm font-bold text-gray-900 truncate block">
+              {identity.name} ({identity.baptismal})
+            </span>
             <span className="text-[11px] text-gray-400">{identity.groupStage}</span>
           </div>
         </div>
-        <a href="/admin" className="text-[11px] text-gray-300 hover:text-gray-500 flex-shrink-0">관리자</a>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <button
+            onClick={() => {
+              localStorage.removeItem(IDENTITY_KEY)
+              setIdentity(null)
+            }}
+            className="text-xs font-semibold text-blue-500 border border-blue-200 rounded-lg px-3 py-1.5 hover:bg-blue-50 active:bg-blue-100"
+          >
+            정보 변경
+          </button>
+          <a href="/admin" className="text-[11px] text-gray-300 hover:text-gray-500">관리자</a>
+        </div>
       </header>
 
       {/* Tabs */}
