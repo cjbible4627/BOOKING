@@ -97,7 +97,16 @@ export default function FormManager() {
           ))}
         </div>
 
-        {sub === 'fields'      && <FormBuilder form={selected} />}
+        {sub === 'fields'      && (
+          <FormBuilder
+            form={selected}
+            onToggleOpen={async (next) => {
+              await toggleFormOpen(selected.id, next)
+              setSelected(prev => prev ? { ...prev, is_open: next } : prev)
+              setForms(prev => prev.map(f => f.id === selected.id ? { ...f, is_open: next } : f))
+            }}
+          />
+        )}
         {sub === 'submissions' && <FormSubmissions form={selected} />}
         {sub === 'stats'       && <FormStats form={selected} />}
         {sub === 'preview'     && <FormPreviewTab form={selected} />}

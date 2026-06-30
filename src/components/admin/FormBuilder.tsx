@@ -7,9 +7,12 @@ import {
   getRounds, addRound, updateRound, deleteRound, setCurrentRound,
 } from '@/lib/form-storage'
 
-interface Props { form: FormDef }
+interface Props {
+  form: FormDef
+  onToggleOpen?: (next: boolean) => Promise<void>
+}
 
-export default function FormBuilder({ form }: Props) {
+export default function FormBuilder({ form, onToggleOpen }: Props) {
   const [fields, setFields] = useState<FormField[]>([])
   const [desc, setDesc]     = useState(form.description ?? '')
   const [openMode, setOpenMode]   = useState<OpenMode>(form.open_mode)
@@ -20,6 +23,8 @@ export default function FormBuilder({ form }: Props) {
   const [newRoundEnd, setNewRoundEnd]       = useState('')
   const [loading, setLoading] = useState(true)
   const [saved, setSaved] = useState(false)
+  const [isOpen, setIsOpen] = useState(form.is_open)
+  const [toggling, setToggling] = useState(false)
 
   function flashSaved() {
     setSaved(true)
@@ -310,6 +315,34 @@ export default function FormBuilder({ form }: Props) {
       >
         + 질문 추가
       </button>
+
+      {/* 모집 시작/중지 */}
+      {onToggleOpen && (
+        <div className={`mt-6 rounded-2xl border-2 p-4 ${isOpen ? 'border-green-200 bg-green-50' : 'border-gray-200 bg-gray-50'}`}>
+          <p className="text-xs text-gray-500 mb-3 text-center">
+            {isOpen
+              ? '현재 모집 중입니다. 메인 화면에 노출되고 있습니다.'
+              : '모집이 중지된 상태입니다. 질문 설정이 완료되면 모집을 시작하세요.'}
+          </p>
+          <button
+            disabled={toggling}
+            onClick={async () => {
+              setToggling(true)
+              const next = !isOpen
+              await onToggleOpen(next)
+              setIsOpen(next)
+              setToggling(false)
+            }}
+            className={`w-full py-3.5 rounded-2xl text-sm font-extrabold disabled:opacity-50 transition-colors ${
+              isOpen
+                ? 'bg-white border-2 border-red-300 text-red-500 active:bg-red-50'
+                : 'bg-green-600 text-white active:bg-green-700'
+            }`}
+          >
+            {toggling ? '처리 중...' : isOpen ? '모집 중지하기' : '🚀 모집 시작하기'}
+          </button>
+        </div>
+      )}
     </div>
   )
 }
