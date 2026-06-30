@@ -31,6 +31,7 @@ export default function FormSubmissions({ form }: Props) {
   const [openId, setOpenId] = useState<string | null>(null)
   const [confirmDel, setConfirmDel] = useState<string | null>(null)
   const [zipping, setZipping] = useState(false)
+  const [indZipping, setIndZipping] = useState(false)
   const [confirmCleanup, setConfirmCleanup] = useState(false)
   const [cleaning, setCleaning] = useState(false)
   const [cleanupResult, setCleanupResult] = useState<string | null>(null)
@@ -145,6 +146,42 @@ export default function FormSubmissions({ form }: Props) {
     setZipping(false)
   }
 
+  async function downloadIndividualZip() {
+    if (filtered.length === 0) return
+    setIndZipping(true)
+    try {
+      const zip = new JSZip()
+      filtered.forEach((s, idx) => {
+        const num = String(filtered.length - idx).padStart(3, '0')
+        const firstVal = s.answers.fields.find(f => fmtValue(f).trim() !== '')
+        const namePart = firstVal ? fmtValue(firstVal).slice(0, 20).replace(/[\\/:*?"<>|]/g, '_') : s.id.slice(0, 8)
+        const roundPart = useRounds ? `[${roundName(s.round_id)}] ` : ''
+
+        const lines: string[] = [
+          `■ ${form.title}`,
+          `${roundPart}제출일시: ${fmtDate(s.created_at)}`,
+          '─'.repeat(40),
+          '',
+          ...s.answers.fields.map(f => `▶ ${f.label || '(제목 없음)'}\n${fmtValue(f) || '(없음)'}`),
+          '',
+          '─'.repeat(40),
+        ]
+
+        zip.file(`${num}_${namePart}.txt`, lines.join('\n'))
+      })
+      const blob = await zip.generateAsync({ type: 'blob' })
+      const today = new Date().toLocaleDateString('sv-SE')
+      const a = document.createElement('a')
+      a.href = URL.createObjectURL(blob)
+      a.download = `${form.title}_개별신청서${roundSuffix()}_${today}.zip`
+      a.click()
+      URL.revokeObjectURL(a.href)
+    } catch {
+      alert('ZIP 생성 중 오류가 발생했습니다.')
+    }
+    setIndZipping(false)
+  }
+
   async function handleCleanup() {
     setCleaning(true)
     setCleanupResult(null)
@@ -230,6 +267,13 @@ export default function FormSubmissions({ form }: Props) {
               className="flex items-center gap-1.5 px-4 py-2 bg-green-600 text-white rounded-xl text-xs font-bold active:scale-95 transition-transform"
             >
               ⬇ 엑셀
+            </button>
+            <button
+              onClick={downloadIndividualZip}
+              disabled={indZipping}
+              className="flex items-center gap-1.5 px-3 py-2 bg-purple-50 border border-purple-200 text-purple-700 rounded-xl text-xs font-bold disabled:opacity-40 active:scale-95 transition-transform"
+            >
+              {indZipping ? '⏳ 압축 중...' : '📋 개별 ZIP'}
             </button>
           </div>
         )}
