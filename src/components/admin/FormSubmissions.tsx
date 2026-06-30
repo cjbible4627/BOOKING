@@ -14,6 +14,10 @@ function fmtValue(e: AnswerEntry): string {
   if (e.type === 'agree') return v === true ? '동의' : '미동의'
   if (e.type === 'checkbox') return Array.isArray(v) ? v.join(', ') : ''
   if (e.type === 'file') return v ? String(v) : '(없음)'
+  if (e.type === 'group') {
+    if (!v || typeof v !== 'object' || Array.isArray(v)) return ''
+    return Object.entries(v as Record<string, string>).map(([k, val]) => `${k}: ${val}`).join(' / ')
+  }
   if (v === null || v === undefined) return ''
   return String(v)
 }

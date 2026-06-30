@@ -64,8 +64,9 @@ export default function FormBuilder({ form, onToggleOpen }: Props) {
   }
 
   function changeType(f: FormField, type: FieldType) {
-    const needsOpts = CHOICE_TYPES.includes(type)
-    const options = needsOpts && f.options.length === 0 ? ['옵션 1'] : f.options
+    const needsOpts = CHOICE_TYPES.includes(type) || type === 'group'
+    const defaultOpts = type === 'group' ? ['항목 1'] : ['옵션 1']
+    const options = needsOpts && f.options.length === 0 ? defaultOpts : f.options
     patchLocal(f.id, { type, options })
     updateField(f.id, { type, options })
   }
@@ -301,6 +302,27 @@ export default function FormBuilder({ form, onToggleOpen }: Props) {
                       </div>
                     ))}
                     <button onClick={() => addOption(f)} className="text-xs text-blue-600 font-semibold text-left pl-5 mt-0.5">+ 선택지 추가</button>
+                  </div>
+                )}
+
+                {/* 복합 입력 항목 편집 */}
+                {f.type === 'group' && (
+                  <div className="flex flex-col gap-1.5 mt-1 pl-1">
+                    <span className="text-[11px] text-gray-400 mb-0.5">입력 항목 레이블</span>
+                    {f.options.map((o, oi) => (
+                      <div key={oi} className="flex items-center gap-2">
+                        <span className="text-gray-300 text-xs">▷</span>
+                        <input
+                          type="text"
+                          value={o}
+                          onChange={e => setOption(f, oi, e.target.value)}
+                          onBlur={() => saveOptions(f)}
+                          className="flex-1 border-b border-gray-200 px-1 py-1 text-xs focus:outline-none focus:border-blue-400"
+                        />
+                        <button onClick={() => removeOption(f, oi)} className="text-gray-400 text-xs px-1">✕</button>
+                      </div>
+                    ))}
+                    <button onClick={() => addOption(f)} className="text-xs text-blue-600 font-semibold text-left pl-5 mt-0.5">+ 항목 추가</button>
                   </div>
                 )}
               </div>

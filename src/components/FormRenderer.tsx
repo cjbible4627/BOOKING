@@ -16,6 +16,7 @@ function isEmpty(type: string, v: AnswerValue): boolean {
   if (type === 'agree')    return v !== true
   if (type === 'number')   return v === null || v === undefined || v === '' || Number.isNaN(Number(v))
   if (type === 'file')     return !v || String(v).trim() === ''
+  if (type === 'group')    return !v || typeof v !== 'object' || Object.values(v as Record<string, string>).every(s => !s.trim())
   return v === null || v === undefined || String(v).trim() === ''
 }
 
@@ -89,7 +90,7 @@ export default function FormRenderer({ form, preview }: Props) {
               </label>
               <FieldInput
                 field={f}
-                value={values[f.id] ?? (f.type === 'checkbox' ? [] : f.type === 'agree' ? false : '')}
+                value={values[f.id] ?? (f.type === 'checkbox' ? [] : f.type === 'agree' ? false : f.type === 'group' ? {} : '')}
                 onChange={(v) => setValue(f.id, v)}
               />
             </div>

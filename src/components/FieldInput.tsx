@@ -74,10 +74,36 @@ function FileInput({ field, value, onChange }: Props) {
   )
 }
 
+function GroupInput({ field, value, onChange }: Props) {
+  const map: Record<string, string> =
+    (value && typeof value === 'object' && !Array.isArray(value))
+      ? (value as Record<string, string>)
+      : {}
+  function set(label: string, val: string) {
+    onChange({ ...map, [label]: val })
+  }
+  return (
+    <div className="flex flex-col gap-2">
+      {field.options.map((label, i) => (
+        <label key={i} className="flex items-center gap-3">
+          <span className="text-sm font-semibold text-gray-600 w-20 flex-shrink-0 text-right">{label}</span>
+          <input
+            type="text"
+            className={INPUT + ' flex-1'}
+            value={map[label] ?? ''}
+            onChange={e => set(label, e.target.value)}
+          />
+        </label>
+      ))}
+    </div>
+  )
+}
+
 export default function FieldInput({ field, value, onChange }: Props) {
   const { type, options, placeholder } = field
 
-  if (type === 'file') return <FileInput field={field} value={value} onChange={onChange} />
+  if (type === 'file')  return <FileInput field={field} value={value} onChange={onChange} />
+  if (type === 'group') return <GroupInput field={field} value={value} onChange={onChange} />
 
   switch (type) {
     case 'long':

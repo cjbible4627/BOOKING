@@ -10,9 +10,10 @@ import NoticeManager from './NoticeManager'
 import ResourceManager from './ResourceManager'
 import StatsView from './StatsView'
 import FormManager from './FormManager'
+import BookingOpenSettings from './BookingOpenSettings'
 
 type MainTab = 'booking' | 'forms' | 'notices' | 'resources'
-type BookingSub = 'bookings' | 'stats' | 'rooms' | 'blocks' | 'export' | 'booking-notices'
+type BookingSub = 'bookings' | 'stats' | 'rooms' | 'blocks' | 'export' | 'booking-notices' | 'booking-open'
 
 const MAIN_TABS: [MainTab, string][] = [
   ['booking',   '🗓️ 공간 예약'],
@@ -28,6 +29,7 @@ const BOOKING_SUBS: [BookingSub, string][] = [
   ['blocks',          '차단 관리'],
   ['export',          '📥 다운로드'],
   ['booking-notices', '📢 예약 공지'],
+  ['booking-open',    '⏰ 접수 설정'],
 ]
 
 export default function AdminDashboard() {
@@ -141,6 +143,7 @@ export default function AdminDashboard() {
         {mainTab === 'booking' && bookingSub === 'blocks'          && <BlockManager />}
         {mainTab === 'booking' && bookingSub === 'export'          && <ExportView />}
         {mainTab === 'booking' && bookingSub === 'booking-notices' && <NoticeManager scope="booking" />}
+        {mainTab === 'booking' && bookingSub === 'booking-open'    && <BookingOpenSettings />}
         {mainTab === 'forms'     && <FormManager />}
         {mainTab === 'notices'   && <NoticeManager scope="main" />}
         {mainTab === 'resources' && <ResourceManager />}

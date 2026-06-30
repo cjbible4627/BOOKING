@@ -92,6 +92,10 @@ export default function FormStats({ form }: Props) {
     if (type === 'agree') return v === true ? '동의' : '미동의'
     if (type === 'checkbox') return Array.isArray(v) ? (v as string[]).join(', ') : ''
     if (type === 'file') return v ? String(v) : '(없음)'
+    if (type === 'group') {
+      if (!v || typeof v !== 'object' || Array.isArray(v)) return ''
+      return Object.entries(v as Record<string, string>).map(([k, val]) => `${k}: ${val}`).join(' / ')
+    }
     if (v === null || v === undefined) return ''
     return String(v)
   }

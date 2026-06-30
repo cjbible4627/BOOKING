@@ -2,10 +2,10 @@
 
 export type FieldType =
   | 'short' | 'long' | 'radio' | 'checkbox' | 'dropdown'
-  | 'number' | 'date' | 'tel' | 'email' | 'agree' | 'file'
+  | 'number' | 'date' | 'tel' | 'email' | 'agree' | 'file' | 'group'
 
 export const FIELD_TYPES: FieldType[] = [
-  'short', 'long', 'radio', 'checkbox', 'dropdown', 'number', 'date', 'tel', 'email', 'agree', 'file',
+  'short', 'long', 'radio', 'checkbox', 'dropdown', 'number', 'date', 'tel', 'email', 'agree', 'file', 'group',
 ]
 
 export const FIELD_TYPE_LABELS: Record<FieldType, string> = {
@@ -20,6 +20,7 @@ export const FIELD_TYPE_LABELS: Record<FieldType, string> = {
   email:    '이메일',
   agree:    '동의체크',
   file:     '파일첨부',
+  group:    '복합입력',
 }
 
 // 선택지를 갖는 필드 타입
@@ -112,7 +113,7 @@ export interface FormWithFields extends FormWithRound {
   fields: FormField[]
 }
 
-export type AnswerValue = string | string[] | number | boolean | null
+export type AnswerValue = string | string[] | number | boolean | Record<string, string> | null
 
 // 제출 시점 스냅샷(라벨·타입 포함) — 질문이 나중에 바뀌어도 자기완결적으로 읽힘
 export interface AnswerEntry {
