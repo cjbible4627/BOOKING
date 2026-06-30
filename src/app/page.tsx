@@ -71,7 +71,7 @@ export default function Home() {
           <span className="text-3xl">🗓️</span>
           <div className="flex-1">
             <p className="text-lg font-extrabold text-white">그룹공부 공간 예약</p>
-            <p className="text-xs font-medium text-blue-100 mt-0.5">방 · 시간대 예약하기</p>
+            <p className="text-xs font-medium text-blue-100 mt-0.5">가톨릭청소년센터 · 방 · 시간대 예약하기</p>
           </div>
           <span className="text-white text-xl">›</span>
         </button>
