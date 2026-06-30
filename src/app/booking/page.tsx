@@ -32,7 +32,7 @@ export default function BookingPage() {
 
   useEffect(() => {
     try {
-      const saved = JSON.parse(localStorage.getItem(IDENTITY_KEY) ?? 'null')
+      const saved = JSON.parse(sessionStorage.getItem(IDENTITY_KEY) ?? 'null')
       if (saved?.name) setIdentity(saved)
     } catch {}
     getRooms().then(setRooms)
@@ -79,7 +79,7 @@ export default function BookingPage() {
         <div className="flex items-center gap-2 flex-shrink-0">
           <button
             onClick={() => {
-              localStorage.removeItem(IDENTITY_KEY)
+              sessionStorage.removeItem(IDENTITY_KEY)
               setIdentity(null)
             }}
             className="text-xs font-semibold text-blue-500 border border-blue-200 rounded-lg px-3 py-1.5 hover:bg-blue-50 active:bg-blue-100"

@@ -20,7 +20,7 @@ export default function IdentityGate({ onComplete }: Props) {
 
   useEffect(() => {
     try {
-      const saved: UserIdentity = JSON.parse(localStorage.getItem(IDENTITY_KEY) ?? '{}')
+      const saved: UserIdentity = JSON.parse(sessionStorage.getItem(IDENTITY_KEY) ?? '{}')
       if (saved.name)       setName(saved.name)
       if (saved.baptismal)  setBaptismal(saved.baptismal)
       if (saved.groupStage) setGroupStage(saved.groupStage)
@@ -34,7 +34,7 @@ export default function IdentityGate({ onComplete }: Props) {
     if (!/^\d{4}$/.test(pin)) return setError('개인 비밀번호는 숫자 4자리입니다.')
 
     const identity: UserIdentity = { name: name.trim(), baptismal: baptismal.trim(), groupStage, pin }
-    localStorage.setItem(IDENTITY_KEY, JSON.stringify(identity))
+    sessionStorage.setItem(IDENTITY_KEY, JSON.stringify(identity))
     onComplete(identity)
   }
 
