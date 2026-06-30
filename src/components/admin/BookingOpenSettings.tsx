@@ -103,23 +103,23 @@ export default function BookingOpenSettings() {
           />
         </label>
 
-        <button
-          onClick={handleSave}
-          disabled={!input || saving}
-          className="w-full py-3 bg-blue-600 text-white rounded-2xl text-sm font-bold disabled:opacity-40"
-        >
-          {saving ? '저장 중...' : '⏰ 접수 시작 시각 설정'}
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={handleSave}
+            disabled={!input || saving}
+            className="flex-1 py-3 bg-blue-600 text-white rounded-2xl text-sm font-bold disabled:opacity-40 active:bg-blue-700"
+          >
+            {saving ? '저장 중...' : '⏰ 접수 시각 설정'}
+          </button>
 
-        {current && (
           <button
             onClick={handleClear}
-            disabled={saving}
-            className="w-full py-3 bg-white border-2 border-red-200 text-red-500 rounded-2xl text-sm font-bold disabled:opacity-40"
+            disabled={!current || saving}
+            className="flex-1 py-3 bg-white border-2 border-red-300 text-red-500 rounded-2xl text-sm font-bold disabled:opacity-40 active:bg-red-50"
           >
-            🔓 접수 제한 해제 (항상 예약 가능)
+            🔓 제한 해제
           </button>
-        )}
+        </div>
 
         {msg && (
           <p className="text-center text-sm font-semibold text-green-600">{msg}</p>
