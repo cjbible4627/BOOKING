@@ -67,7 +67,20 @@ export default function FormManager() {
           >
             ‹
           </button>
-          <span className="font-extrabold text-gray-900 text-[15px]">{selected.title}</span>
+          <span className="font-extrabold text-gray-900 text-[15px] flex-1 min-w-0 truncate">{selected.title}</span>
+          <button
+            onClick={async () => {
+              const next = !selected.is_open
+              await toggleFormOpen(selected.id, next)
+              setSelected(prev => prev ? { ...prev, is_open: next } : prev)
+              setForms(prev => prev.map(f => f.id === selected.id ? { ...f, is_open: next } : f))
+            }}
+            className={`text-xs font-bold px-3 py-1.5 rounded-full whitespace-nowrap flex-shrink-0 ${
+              selected.is_open ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
+            }`}
+          >
+            {selected.is_open ? '모집중' : '모집중지'}
+          </button>
         </div>
 
         <div className="flex gap-1 px-4 border-b border-gray-100">

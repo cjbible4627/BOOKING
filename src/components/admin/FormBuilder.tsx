@@ -19,6 +19,12 @@ export default function FormBuilder({ form }: Props) {
   const [newRoundStart, setNewRoundStart]   = useState('')
   const [newRoundEnd, setNewRoundEnd]       = useState('')
   const [loading, setLoading] = useState(true)
+  const [saved, setSaved] = useState(false)
+
+  function flashSaved() {
+    setSaved(true)
+    setTimeout(() => setSaved(false), 2000)
+  }
 
   async function load() {
     const [fs, rs] = await Promise.all([getFields(form.id), getRounds(form.id)])
@@ -107,6 +113,11 @@ export default function FormBuilder({ form }: Props) {
 
   return (
     <div className="px-4 py-4 max-w-2xl">
+      {/* 자동저장 인디케이터 */}
+      <div className={`flex items-center justify-end mb-3 transition-opacity duration-300 ${saved ? 'opacity-100' : 'opacity-0'}`}>
+        <span className="text-xs text-green-600 font-semibold">✓ 저장됨</span>
+      </div>
+
       {/* 모집 설정 */}
       <div className="rounded-2xl border-2 border-gray-200 p-4 mb-5">
         <span className="text-xs font-semibold text-gray-500 mb-2 block">모집 방식</span>
@@ -210,7 +221,7 @@ export default function FormBuilder({ form }: Props) {
         <textarea
           value={desc}
           onChange={e => setDesc(e.target.value)}
-          onBlur={e => updateForm(form.id, { description: e.target.value })}
+          onBlur={e => { updateForm(form.id, { description: e.target.value }); flashSaved() }}
           placeholder="신청서 상단에 표시할 안내 문구"
           className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-blue-400 min-h-[60px] resize-y"
         />
@@ -234,7 +245,7 @@ export default function FormBuilder({ form }: Props) {
                   type="text"
                   value={f.label}
                   onChange={e => patchLocal(f.id, { label: e.target.value })}
-                  onBlur={e => updateField(f.id, { label: e.target.value })}
+                  onBlur={e => { updateField(f.id, { label: e.target.value }); flashSaved() }}
                   placeholder="질문을 입력하세요"
                   className="w-full border-b-2 border-gray-200 px-1 py-1.5 text-sm font-medium focus:outline-none focus:border-blue-500 mb-2"
                 />
