@@ -12,6 +12,8 @@ export const GROUP_COLORS: Record<GroupStage, {
   '요한':     { cell: 'bg-white border border-gray-200', badge: 'bg-gray-400 text-white', name: 'text-gray-800', sub: 'text-gray-500' },
   '사도행전': { cell: 'bg-yellow-50', badge: 'bg-yellow-500 text-white', name: 'text-yellow-900', sub: 'text-yellow-600' },
   '이사야':   { cell: 'bg-pink-50',   badge: 'bg-pink-500 text-white',   name: 'text-pink-900',   sub: 'text-pink-600' },
+  '청소년센터': { cell: 'bg-teal-50',  badge: 'bg-teal-600 text-white',   name: 'text-teal-900',   sub: 'text-teal-600' },
+  '한처음':   { cell: 'bg-purple-50', badge: 'bg-purple-600 text-white', name: 'text-purple-900', sub: 'text-purple-600' },
 }
 
 export const ROOMS: Room[] = [
@@ -21,7 +23,7 @@ export const ROOMS: Room[] = [
 ]
 
 export const GROUP_STAGES: GroupStage[] = [
-  '창세기', '탈출기', '마르코', '요한', '사도행전', '이사야',
+  '창세기', '탈출기', '마르코', '요한', '사도행전', '이사야', '청소년센터', '한처음',
 ]
 
 export const OP_START = 8   // 08:00

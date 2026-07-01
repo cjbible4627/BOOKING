@@ -1,4 +1,4 @@
-export type GroupStage = '창세기' | '탈출기' | '마르코' | '요한' | '사도행전' | '이사야'
+export type GroupStage = '창세기' | '탈출기' | '마르코' | '요한' | '사도행전' | '이사야' | '청소년센터' | '한처음'
 
 export interface Room {
   id: string

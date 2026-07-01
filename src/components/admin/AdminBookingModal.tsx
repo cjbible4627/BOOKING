@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
-import type { Booking, Room, GroupStage } from '@/lib/types'
+import type { Booking, Room, GroupStage, SelectedSlot } from '@/lib/types'
 import { GROUP_STAGES, TIME_SLOTS, OP_END } from '@/lib/constants'
 import { createBooking, updateBooking } from '@/lib/storage'
 
@@ -8,6 +8,7 @@ interface Props {
   editTarget: Booking | null
   rooms: Room[]
   defaultDate: string
+  defaultSlot?: SelectedSlot
   onClose: () => void
   onSaved: () => void
 }
@@ -20,7 +21,7 @@ function endOptions(startTime: string): string[] {
   )
 }
 
-export default function AdminBookingModal({ editTarget, rooms, defaultDate, onClose, onSaved }: Props) {
+export default function AdminBookingModal({ editTarget, rooms, defaultDate, defaultSlot, onClose, onSaved }: Props) {
   const isEdit = !!editTarget
   const activeRooms = rooms.filter(r => r.is_active)
 
@@ -32,7 +33,7 @@ export default function AdminBookingModal({ editTarget, rooms, defaultDate, onCl
   const [baptismalName, setBaptismal] = useState('')
   const [groupStage, setGroupStage]   = useState<GroupStage>(GROUP_STAGES[0])
   const [memberCount, setMemberCount] = useState('')
-  const [pin, setPin]                 = useState('')
+  const [pin, setPin]                 = useState('0000')
   const [error, setError]             = useState('')
   const [loading, setLoading]         = useState(false)
 
@@ -48,16 +49,19 @@ export default function AdminBookingModal({ editTarget, rooms, defaultDate, onCl
       setMemberCount(String(editTarget.member_count))
       setPin(editTarget.pin)
     } else {
-      setRoomId(activeRooms[0]?.id ?? '')
-      setDate(defaultDate)
-      setStartTime(TIME_SLOTS[0])
-      const opts = endOptions(TIME_SLOTS[0])
+      const initRoom  = defaultSlot?.room_id   ?? activeRooms[0]?.id ?? ''
+      const initTime  = defaultSlot?.start_time ?? TIME_SLOTS[0]
+      const initDate  = defaultSlot?.date       ?? defaultDate
+      setRoomId(initRoom)
+      setDate(initDate)
+      setStartTime(initTime)
+      const opts = endOptions(initTime)
       setEndTime(opts.length >= 2 ? opts[1] : opts[0])
       setLeaderName('')
       setBaptismal('')
       setGroupStage(GROUP_STAGES[0])
       setMemberCount('')
-      setPin('')
+      setPin('0000')
     }
     setError('')
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -79,7 +83,6 @@ export default function AdminBookingModal({ editTarget, rooms, defaultDate, onCl
     if (endTime <= startTime) return setError('종료 시간이 시작 시간보다 늦어야 합니다.')
     const mc = parseInt(memberCount)
     if (!memberCount || isNaN(mc) || mc < 1) return setError('원명수를 입력해주세요.')
-    if (!/^\d{4}$/.test(pin)) return setError('PIN 4자리를 입력해주세요.')
 
     const data = {
       room_id: roomId,
@@ -211,32 +214,18 @@ export default function AdminBookingModal({ editTarget, rooms, defaultDate, onCl
           </div>
         </label>
 
-        {/* 원명수 / PIN */}
-        <div className="flex gap-2 mb-4">
-          <label className="flex-1">
-            <span className="text-xs text-gray-500 mb-1 block">그룹 원명수</span>
-            <input
-              type="number"
-              min={1}
-              value={memberCount}
-              onChange={(e) => setMemberCount(e.target.value)}
-              placeholder="0"
-              className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-400"
-            />
-          </label>
-          <label className="flex-1">
-            <span className="text-xs text-gray-500 mb-1 block">PIN 4자리</span>
-            <input
-              type="text"
-              inputMode="numeric"
-              maxLength={4}
-              value={pin}
-              onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
-              placeholder="0000"
-              className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-400"
-            />
-          </label>
-        </div>
+        {/* 원명수 */}
+        <label className="block mb-4">
+          <span className="text-xs text-gray-500 mb-1 block">그룹 원명수</span>
+          <input
+            type="number"
+            min={1}
+            value={memberCount}
+            onChange={(e) => setMemberCount(e.target.value)}
+            placeholder="0"
+            className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-400"
+          />
+        </label>
 
         {error && <p className="text-red-500 text-xs mb-3">{error}</p>}
 

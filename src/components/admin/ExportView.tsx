@@ -16,6 +16,8 @@ const XL_BG: Record<GroupStage, string> = {
   '요한':     'D3D1C7',
   '사도행전': 'FAC775',
   '이사야':   'F4C0D1',
+  '청소년센터': 'A0D9D4',
+  '한처음':   'C7B8E8',
 }
 const XL_FG: Record<GroupStage, string> = {
   '창세기':   '0C447C',
@@ -24,6 +26,8 @@ const XL_FG: Record<GroupStage, string> = {
   '요한':     '2C2C2A',
   '사도행전': '412402',
   '이사야':   '4B1528',
+  '청소년센터': '0C4E4B',
+  '한처음':   '3A1A6E',
 }
 // Preview row bg (lighter)
 const PREVIEW_BG: Record<GroupStage, string> = {
@@ -33,6 +37,8 @@ const PREVIEW_BG: Record<GroupStage, string> = {
   '요한':     '#F1EFE8',
   '사도행전': '#FAEEDA',
   '이사야':   '#FBEAF0',
+  '청소년센터': '#D9F0EE',
+  '한처음':   '#EAE2F7',
 }
 
 type Preset = 'thisMonth' | 'lastMonth' | 'thisWeek' | 'custom'

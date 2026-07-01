@@ -15,6 +15,8 @@ const DOT_COLOR: Record<GroupStage, string> = {
   '요한':     '#888780',
   '사도행전': '#EF9F27',
   '이사야':   '#D4537E',
+  '청소년센터': '#0D9488',
+  '한처음':   '#7C3AED',
 }
 
 function toIso(year: number, month: number, day: number) {

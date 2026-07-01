@@ -11,6 +11,7 @@ interface Props {
   rooms: Room[]
   blockedPeriods: BlockedPeriod[]
   onSlotClick: (slot: SelectedSlot) => void
+  onBookingClick?: (booking: Booking) => void
 }
 
 function isPast(date: string, time: string): boolean {
@@ -102,7 +103,7 @@ const COLUMN_COLORS = [
   { header: 'bg-purple-500 text-white',  empty: 'hover:bg-purple-100 active:bg-purple-200', tint: 'bg-purple-50' },
 ]
 
-export default function BookingGrid({ date, bookings, rooms, blockedPeriods, onSlotClick }: Props) {
+export default function BookingGrid({ date, bookings, rooms, blockedPeriods, onSlotClick, onBookingClick }: Props) {
   const today = new Date().toLocaleDateString('sv-SE')
   const activeRooms = rooms.filter(r => r.is_active)
   const [popup, setPopup] = useState<Booking | null>(null)
@@ -150,7 +151,7 @@ export default function BookingGrid({ date, bookings, rooms, blockedPeriods, onS
                           key={room.id}
                           rowSpan={span}
                           className={`border-2 border-gray-300 ${c.cell} align-top p-1.5 cursor-pointer active:opacity-80`}
-                          onClick={() => setPopup(booking)}
+                          onClick={() => onBookingClick ? onBookingClick(booking) : setPopup(booking)}
                         >
                           <div className="leading-tight">
                             <div className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full inline-block mb-1 ${c.badge}`}>
